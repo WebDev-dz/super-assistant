@@ -1,136 +1,169 @@
-# Sketch App - Local-First Drawing with InstantDB 🎨
+# AI Chat Feature for Todo Creation
 
-A simple yet powerful sketching app built with **Expo** and **InstantDB** that demonstrates how to create local-first applications. Draw, create shapes, and see your creations sync seamlessly across devices in real-time.
+This feature allows users to chat with an AI assistant to create and manage todos. The AI can understand natural language and automatically create structured todos with appropriate priorities, due dates, and descriptions.
 
-This project showcases the power of local-first architecture where your app works offline and syncs automatically when online, providing a smooth user experience regardless of network conditions.
+## Features
 
-## ✨ Features
+### 🤖 AI-Powered Todo & Goal Creation
+- Natural language processing to understand user intent
+- Automatic extraction of todo details (title, description, priority, due date)
+- Smart priority assignment based on urgency keywords
+- Date parsing from natural language (e.g., "tomorrow", "next Friday")
+- Multiple todo creation from complex requests
+- Goal creation with milestones and tasks
+- Structured project breakdown into multiple related todos
 
-- **Real-time Collaboration**: Multiple users can draw on the same canvas simultaneously
-- **Local-First Architecture**: Works offline, syncs when online
-- **Interactive Drawing**: Create and move various shapes (rectangles, circles, triangles, diamonds, stars, hexagons)
-- **Touch Gestures**: Drag and drop shapes with smooth animations
-- **Color Palette**: Multiple colors to choose from
-- **Responsive Design**: Works on iOS, Android, and web
+### 💬 Conversational Interface
+- Chat-like interface similar to messaging apps
+- Quick action buttons for common todo types
+- Real-time AI responses
+- Message history and context awareness
+- Voice recording for hands-free todo creation
 
-## 🚀 Tech Stack
+### 📝 Todo Integration
+- Seamless integration with the existing todos system
+- Automatic creation of todos from chat conversations
+- Preview of todo details before creation
+- One-click todo creation from chat
 
-- **[Expo](https://expo.dev)** - React Native framework for universal apps
-- **[InstantDB](https://instantdb.com)** - Local-first database with real-time sync
-- **[Bun](https://bun.sh)** - Fast package manager and runtime
-- **React Native Reanimated** - Smooth gesture animations
-- **React Native Gesture Handler** - Touch gesture management
+## How to Use
 
-## 📱 Demo
+### Getting Started
+1. Navigate to the "AI Chat" tab in the app
+2. The AI assistant will greet you with helpful examples
+3. Type your todo request in natural language or use voice recording
 
-Watch the video on YouTube → [Build a Local-First Sketch App with Expo, Instant & Reanimated](https://youtu.be/DEJIcaGN3vY)
+### Example Prompts
+- "I need to buy groceries tomorrow"
+- "Create a high priority task to finish the project by Friday"
+- "I want to exercise 3 times this week"
+- "Remind me to call the dentist next week"
+- "I have a meeting with the client on Monday at 2pm"
+- "I need to buy groceries, call the dentist, and finish my project" (creates 3 todos)
+- "I want to learn Spanish this year" (creates a goal with milestones)
+- "I have a big project with research, design, and implementation phases" (creates a goal with 3 milestones)
 
-![InstantDB Tutorial](https://github.com/user-attachments/assets/3aedcf3a-5861-422d-a647-1fa899a8a3e1)
+### Quick Actions
+The chat interface includes quick action buttons for common todo types:
+- Grocery shopping
+- Project deadlines
+- Exercise goals
+- Appointment reminders
 
+### Creating Todos & Goals
+1. Type your request in the chat or use voice recording
+2. The AI will analyze your message and extract relevant details
+3. A preview of the todos/goals will appear in the chat
+4. Click "Create Todo" or "Create Goal" to add them to your list
+5. The items will appear in the main Todos/Goals tabs
 
-## 🛠️ Setup
+**Multiple Items:**
+- When you mention multiple tasks, the AI creates separate todos
+- Complex projects are broken down into multiple related todos
+- Goals with milestones create structured project plans
+- All items can be created with a single click
 
-### Prerequisites
+### Voice Recording
+1. Tap the 🎤 button next to the text input
+2. Speak your todo request clearly
+3. Tap "Stop Recording" when finished
+4. The AI will process your voice and create a todo
+5. Review and confirm the created todo
 
-- **Bun** installed on your machine
-- **Expo CLI** (optional, but recommended)
-- **InstantDB account** for the app ID
+**Mobile Platforms (iOS/Android):**
+- Audio files are sent directly to the AI API for processing
+- Uses OpenAI Whisper for accurate transcription
+- No reliance on device-specific speech recognition
+- More reliable than built-in voice recognition
 
-### Installation
+## Technical Implementation
 
-1. **Clone the repository**
+### API Endpoints
+- `/api/chat-api` - Main chat API endpoint
+- `/api/ai+api` - Voice-to-todo conversion API
 
-   ```bash
-   git clone https://github.com/betomoedano/sketch-app.git
-   cd sketch-app
-   ```
+### AI Integration
+- Uses OpenAI GPT-4o-mini for natural language processing
+- OpenAI Whisper for audio transcription on mobile platforms
+- Function calling for structured todo and goal creation
+- Support for multiple todos and goals in single requests
+- Context-aware conversations with message history
+- Intelligent project breakdown and milestone creation
 
-2. **Install dependencies**
+### Database Integration
+- Todos created through chat are saved to InstantDB
+- Integration with existing goals and milestones system
+- Standalone todos for quick tasks
 
-   ```bash
-   bun install
-   ```
+## File Structure
 
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
+```
+app/
+├── chat.tsx              # Main chat interface
+├── api/
+│   ├── chat-api.ts       # Chat API endpoint
+│   └── ai+api.ts         # Voice-to-todo API
+└── _layout.tsx           # Tab navigation (updated)
 
-   ```bash
-   EXPO_PUBLIC_INSTANT_APP_ID=your_instantdb_app_id
-   ```
+components/
+└── (existing components)
 
-   Get your InstantDB app ID from [InstantDB Dashboard](https://instantdb.com/dash)
-
-4. **Start the development server**
-   ```bash
-   bun run start
-   ```
-
-## 📖 How It Works
-
-This app demonstrates key local-first principles:
-
-- **Offline-First**: The app works without an internet connection
-- **Real-time Sync**: Changes sync across devices when online
-- **Conflict Resolution**: InstantDB handles concurrent edits automatically
-- **Optimistic Updates**: UI updates immediately, syncs in the background
-
-### Data Model
-
-The app uses a simple schema defined in `instant.schema.ts`:
-
-```typescript
-elements: {
-  type: string,     // Shape type (rectangle, circle, etc.)
-  x: number,        // X position
-  y: number,        // Y position
-  color: string,    // Shape color
-  width?: number,   // Optional width
-  height?: number,  // Optional height
-  createdAt: number // Timestamp
-}
+instant.schema.ts          # Database schema (includes chat entities)
 ```
 
-## 🎯 Key Learning Points
+## Configuration
 
-- **InstantDB Setup**: See `db.ts` for database initialization
-- **Real-time Queries**: Check `SketchCanvas.tsx` for `useQuery` usage
-- **Optimistic Updates**: Elements update immediately via `db.transact`
-- **Schema Definition**: Explore `instant.schema.ts` for data modeling
-- **Gesture Handling**: Touch interactions with React Native Gesture Handler
+### Environment Variables
+Make sure to set up your OpenAI API key:
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-## 🔧 Available Scripts
+### Dependencies
+The feature uses these key dependencies:
+- `openai` - OpenAI API client
+- `zod` - Schema validation
+- `@instantdb/react-native` - Database integration
 
-- `bun run start` - Start the Expo development server
-- `bun run android` - Run on Android device/emulator
-- `bun run ios` - Run on iOS device/simulator
-- `bun run web` - Run in web browser
-- `bun run lint` - Run ESLint
+## Future Enhancements
 
-## 📚 Learn More
+### Planned Features
+- Enhanced voice input with better accuracy
+- Todo templates and suggestions
+- Bulk todo creation
+- Smart categorization
+- Integration with calendar events
+- Todo completion tracking from chat
 
-### About InstantDB
+### Potential Improvements
+- Multi-language support
+- Advanced date parsing
+- Recurring todo creation
+- Todo editing through chat
+- Integration with external calendars
 
-- [InstantDB Documentation](https://instantdb.com/docs): Learn about local-first databases
-- [InstantDB Examples](https://instantdb.com/examples): More example projects
+## Troubleshooting
 
-### About Expo
+### Common Issues
+1. **API Key Missing**: Ensure your OpenAI API key is properly configured
+2. **Network Errors**: Check your internet connection
+3. **Todo Creation Fails**: Verify the database connection
 
-- [Expo Documentation](https://docs.expo.dev/): Learn fundamentals and advanced topics
-- [Learn Expo Tutorial](https://docs.expo.dev/tutorial/introduction/): Step-by-step tutorial
+### Debug Mode
+Enable debug logging by checking the browser console for detailed error messages.
 
-### About Local-First
+## Contributing
 
-- [Local-First Software](https://www.inkandswitch.com/local-first/): The manifesto that started it all
-- [Local-First Web Development](https://localfirstweb.dev/): Community resources
+To add new features to the chat system:
+1. Update the AI system prompt in `chat-api.ts`
+2. Add new function schemas for additional capabilities
+3. Update the chat interface in `chat.tsx`
+4. Test with various user inputs
 
-## 🤝 Contributing
+## Support
 
-Feel free to open issues and submit pull requests! This is a learning project and contributions are welcome.
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
-Built with ❤️ using InstantDB, Expo, and Bun
+For issues or questions about the chat feature, please check:
+1. The console for error messages
+2. Your OpenAI API key configuration
+3. Network connectivity
+4. Database connection status 
