@@ -73,6 +73,7 @@ function DialogContent({
     <DialogPortal hostName={portalHost}>
       <DialogOverlay>
         <DialogPrimitive.Content
+          
           className={cn(
             'max-w-lg gap-4 border border-border web:cursor-default bg-background p-6 shadow-lg web:duration-200 rounded-lg',
             open
@@ -102,6 +103,12 @@ function DialogContent({
 function DialogHeader({ className, ...props }: ViewProps) {
   return (
     <View className={cn('flex flex-col gap-1.5 text-center sm:text-left', className)} {...props} />
+  );
+}
+
+function DialogBody({ className, ...props }: ViewProps) {
+  return (
+    <View className={cn('flex flex-col gap-4', className)} {...props} />
   );
 }
 
@@ -147,6 +154,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

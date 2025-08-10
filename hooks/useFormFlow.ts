@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Alert } from 'react-native';
 import { useNavigationPanel, UseNavigationPanelProps } from './useNavigationPanel';
 
-export type UseFormFlowProps<T extends z.ZodTypeAny> = {
+export type UseFormFlowProps<T extends z.ZodObject> = {
   stepSchemas: z.ZodObject[];
   fullSchema: T;
   scrollEnabled?: boolean;

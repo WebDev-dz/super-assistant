@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.mobdevdz.goalsapp"
     },
     "web": {
       "bundler": "metro",
@@ -47,6 +48,12 @@
         "projectId": "49a39e1d-0865-434d-b235-5700b6034a9e"
       }
     },
-    "owner": "mobdevdz"
+    "owner": "mobdevdz",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/49a39e1d-0865-434d-b235-5700b6034a9e"
+    }
   }
 }

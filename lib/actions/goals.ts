@@ -4,7 +4,7 @@ import { id, UpdateParams } from '@instantdb/react';
 import z, { object } from 'zod';
 import { PartialDeep } from '../types';
 import { GoalSchema } from '../validations';
-import { updateQuery } from '../db/queries';
+import { deleteQuery, updateQuery } from '../db/queries';
 import * as expoCalendar from "expo-calendar"
 
 export type GoalsActions = {
@@ -66,8 +66,8 @@ const deleteGoal = async (goalId: string) => {
         // Delete from expo calendar
 
         // Delete from database
-        const query = await updateQuery("goals", { id: goalId });
-        await db.transact([{ ...query, delete: true }]);
+        const query = await deleteQuery("goals", goalId);
+        await db.transact([{ ...query }]);
 
         console.log("Goal deleted successfully:", goalId);
     } catch (error) {
@@ -80,7 +80,7 @@ const deleteBulkGoals = async (goalIds: string[]) => {
     console.log("Bulk deleting Goals:", goalIds);
 
     if (!goalIds || goalIds.length === 0) {
-        throw new Error("Goal IDs array is required and cannot be empty");
+        return;
     }
 
     try {

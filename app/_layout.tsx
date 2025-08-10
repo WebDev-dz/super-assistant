@@ -14,7 +14,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { Tabs } from "expo-router";
-
+import  Toaster  from "react-native-toast-message";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Text, View, StyleSheet, Platform, TouchableOpacity } from "react-native";
@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useRef, useState } from "react";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { InstantDataProvider } from "@/hooks/data-provider";
+import { PortalHost } from '@rn-primitives/portal';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -56,12 +57,13 @@ function RootLayoutNav() {
         headerTintColor: colorScheme === "dark" ? "#FFFFFF" : "#000000",
       }}
     >
-      {/* Goals Tab */}
+      {/* Home Tab */}
       <Tabs.Screen
-        name="index"
+        name="(app)"
+        
         options={{
-          title: "Goals",
           headerStyle: {display: "none"},
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Text style={{ color, fontSize: size }}>🎯</Text>
           ),
@@ -75,7 +77,7 @@ function RootLayoutNav() {
       
       {/* Todos Tab */}
       <Tabs.Screen
-        name="todos"
+        name="(app)/todos"
         options={{
           title: "Todos",
           tabBarIcon: ({ color, size }) => (
@@ -103,7 +105,7 @@ function RootLayoutNav() {
           tabBarIcon: ({ color, size }) => (
             <Text style={{ color, fontSize: size }}>💬</Text>
           ),
-          header: ({ route }) => (
+          header: ({ route }: any) => (
             <View style={styles.header}>
               <Text style={styles.headerTitle}>
                 AI Chat {route?.params?.id}
@@ -174,6 +176,8 @@ export default function RootLayout() {
           </BottomSheetModalProvider>
 
           </InstantDataProvider>
+          <Toaster />
+          <PortalHost />
         </GestureHandlerRootView>
       </ThemeProvider>
     </ClerkProvider>

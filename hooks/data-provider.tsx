@@ -57,7 +57,7 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
 
   const loading = query.isLoading;
   const data = query.data;
-
+  
   const goals: Goal[] = React.useMemo(() => (data?.goals ?? []) as any, [data]);
   const milestones: Milestone[] = React.useMemo(() => (data?.milestones ?? []) as any, [data]);
   const tasks: Task[] = React.useMemo(() => (data?.tasks ?? []) as any, [data]);

@@ -80,7 +80,7 @@ const deleteBulkTasks = async (taskIds: string[]) => {
     console.log("Bulk deleting Tasks:", taskIds);
     
     if (!taskIds || taskIds.length === 0) {
-        throw new Error("Task IDs array is required and cannot be empty");
+        return;
     }
 
     try {

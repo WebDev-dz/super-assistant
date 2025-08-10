@@ -98,7 +98,7 @@ const deleteBulkEvents = async (eventIds: string[]) => {
     console.log("Bulk deleting Events:", eventIds);
     
     if (!eventIds || eventIds.length === 0) {
-        throw new Error("Event IDs array is required and cannot be empty");
+        return;
     }
 
     try {

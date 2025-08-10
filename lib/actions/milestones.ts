@@ -80,7 +80,7 @@ const deleteBulkMilestones = async (milestoneIds: string[]) => {
     console.log("Bulk deleting Milestones:", milestoneIds);
     
     if (!milestoneIds || milestoneIds.length === 0) {
-        throw new Error("Milestone IDs array is required and cannot be empty");
+        return;
     }
 
     try {

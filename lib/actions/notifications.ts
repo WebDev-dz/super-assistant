@@ -78,7 +78,7 @@ const deleteBulkNotifications = async (notificationIds: string[]) => {
     console.log("Bulk deleting Notifications:", notificationIds);
     
     if (!notificationIds || notificationIds.length === 0) {
-        throw new Error("Notification IDs array is required and cannot be empty");
+        return;
     }
 
     try {

@@ -22,6 +22,7 @@ import {
   FormInput,
 } from '~/components/ui/form';
 import { Text } from '~/components/ui/text';
+import { useColorScheme } from '@/lib/useColorScheme';
 import db from '@/db';
 import { Input } from '@/components/ui/input';
 
@@ -63,6 +64,8 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const [pendingVerification, setPendingVerification] = React.useState(false);
   const [verificationCode, setVerificationCode] = React.useState('');
@@ -115,6 +118,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
       if (completeSignUp.status === 'complete') {
 
         await setActive({ session: completeSignUp.createdSessionId });
+
         router.push('/');
       } else {
         console.log(JSON.stringify(completeSignUp, null, 2));
@@ -130,7 +134,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
       if (createdSessionId && setActive) {
         setActive({ session: createdSessionId });
-        router.replace('/');
+        router.push('/');
       }
     } catch (err) {
       Alert.alert('Error', 'Google sign-up failed');
@@ -143,7 +147,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
       if (createdSessionId && setActive) {
         setActive({ session: createdSessionId });
-        router.replace('/');
+        router.push('/');
       }
     } catch (err) {
       Alert.alert('Error', 'Apple sign-up failed');
@@ -155,7 +159,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
     return (
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-white"
+        className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
       >
         <ScrollView 
           contentContainerStyle={{ 
@@ -174,10 +178,10 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
               <View className="w-20 h-20 bg-green-500 rounded-full items-center justify-center mb-4">
                 <Ionicons name="mail-outline" size={32} color="white" />
               </View>
-              <Text className="text-3xl font-bold text-gray-900 mb-2">
+              <Text className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Check Your Email
               </Text>
-              <Text className="text-gray-600 text-center text-base">
+              <Text className={`text-center text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 We've sent a verification code to your email address. Enter the code below to complete your registration.
               </Text>
             </View>
@@ -185,7 +189,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
             {/* Verification Input */}
             <View className="space-y-6 mb-8">
               <View>
-                <Text className="text-gray-700 text-sm font-medium mb-2">
+                <Text className={`text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Verification Code
                 </Text>
                 <View className="relative">
@@ -215,7 +219,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
             {/* Resend Code */}
             <View className="flex-row justify-center items-center">
-              <Text className="text-gray-600 text-base">
+              <Text className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 Didn't receive the code? 
               </Text>
               <TouchableOpacity 
@@ -239,7 +243,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
     >
       <ScrollView 
         contentContainerStyle={{ 
@@ -258,10 +262,10 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
             <View className="w-20 h-20 bg-green-500 rounded-full items-center justify-center mb-4">
               <Ionicons name="person-add-outline" size={32} color="white" />
             </View>
-            <Text className="text-3xl font-bold text-gray-900 mb-2">
+            <Text className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Create Account
             </Text>
-            <Text className="text-gray-600 text-center text-base">
+            <Text className={`text-center text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Join Super Assistant and start managing your goals and todos with AI
             </Text>
           </View>
@@ -276,7 +280,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
             >
               <View className="flex-row items-center">
                 <Ionicons name="logo-google" size={20} color="#4285F4" />
-                <Text className="ml-2 text-gray-700 font-medium">Google</Text>
+                <Text className={`ml-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Google</Text>
               </View>
             </Button>
 
@@ -297,9 +301,9 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
           {/* Divider */}
           <View className="flex-row items-center mb-8">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="px-4 text-gray-500 text-sm">Or create with email</Text>
-            <View className="flex-1 h-px bg-gray-200" />
+            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
+            <Text className={`px-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Or create with email</Text>
+            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
           </View>
 
           {/* Sign Up Form */}
@@ -405,7 +409,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
           {/* Terms and Privacy */}
           <View className="mb-6">
-            <Text className="text-gray-500 text-sm text-center">
+            <Text className={`text-sm text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               By creating an account, you agree to our{' '}
               <Text className="text-blue-500">Terms of Service</Text> and{' '}
               <Text className="text-blue-500">Privacy Policy</Text>
@@ -431,7 +435,7 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
           {/* Sign In Link */}
           <View className="flex-row justify-center items-center mt-auto">
-            <Text className="text-gray-600 text-base">
+            <Text className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Already have an account? 
             </Text>
             <TouchableOpacity 

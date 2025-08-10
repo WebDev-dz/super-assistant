@@ -11,6 +11,7 @@ import { useAuth, useUser } from '@clerk/clerk-expo';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
+import { Switch } from '~/components/ui/switch';
 import { useColorScheme } from '@/lib/useColorScheme';
 import db from '@/db';
 
@@ -21,6 +22,7 @@ interface MenuItemProps {
   onPress: () => void;
   showArrow?: boolean;
   color?: string;
+  rightElement?: React.ReactNode;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({
@@ -30,6 +32,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   onPress,
   showArrow = true,
   color,
+  rightElement,
 }) => {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -66,12 +69,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
         )}
       </View>
       
-      {showArrow && (
-        <Ionicons 
-          name="chevron-forward" 
-          size={20} 
-          color={isDark ? '#9CA3AF' : '#6B7280'} 
-        />
+      {rightElement ? (
+        <View>
+          {rightElement}
+        </View>
+      ) : (
+        showArrow && (
+          <Ionicons 
+            name="chevron-forward" 
+            size={20} 
+            color={isDark ? '#9CA3AF' : '#6B7280'} 
+          />
+        )
       )}
     </TouchableOpacity>
   );
@@ -82,7 +91,7 @@ export default function MenuScreen() {
   const { user } = useUser();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   const handleSignOut = async () => {
@@ -95,16 +104,17 @@ export default function MenuScreen() {
     }
   };
 
-  const menuSections = [
+  type MenuSection = { title: string; items: MenuItemProps[] };
+  const menuSections: MenuSection[] = [
     {
       title: 'Account',
       items: isSignedIn
         ? [
             {
-              icon: 'person-outline' as const,
+              icon: 'person-outline',
               title: 'Profile',
               subtitle: user?.emailAddresses[0]?.emailAddress || 'Manage your profile',
-              onPress: () => router.push('(menu)/profile'),
+              onPress: () => Alert.alert('Profile', 'Profile page coming soon!'),
             },
             // {
             //   icon: 'settings-outline' as const,
@@ -115,20 +125,40 @@ export default function MenuScreen() {
           ]
         : [
             {
-              icon: 'log-in-outline' as const,
+              icon: 'log-in-outline',
               title: 'Sign In',
               subtitle: 'Access your account',
               onPress: () => router.push('/(auth)/sign-in'),
               color: '#007AFF',
             },
             {
-              icon: 'person-add-outline' as const,
+              icon: 'person-add-outline',
               title: 'Sign Up',
               subtitle: 'Create a new account',
               onPress: () => router.push('/(auth)/sign-up'),
               color: '#34C759',
             },
           ],
+    },
+    {
+      title: 'Appearance',
+      items: [
+        {
+          icon: isDark ? 'moon' : 'sunny',
+          title: 'Dark Mode',
+          subtitle: isDark ? 'On' : 'Off',
+          onPress: () => setColorScheme(isDark ? 'light' : 'dark'),
+          showArrow: false,
+          rightElement: (
+            <Switch
+              checked={isDark}
+              onCheckedChange={(checked: boolean) =>
+                setColorScheme(checked ? 'dark' : 'light')
+              }
+            />
+          ),
+        },
+      ],
     },
     {
       title: 'Support',
@@ -138,6 +168,13 @@ export default function MenuScreen() {
           title: 'Help & Support',
           subtitle: 'Get help and contact support',
           onPress: () => router.push('/menu/help'),
+        },
+        {
+          icon: 'heart-outline' as const,
+          title: 'Donate',
+          subtitle: 'Support the development',
+          onPress: () => router.push('/menu/donate'),
+          color: '#FF6B6B',
         },
         {
           icon: 'information-circle-outline' as const,
@@ -209,6 +246,7 @@ export default function MenuScreen() {
                 onPress={item.onPress}
                 // showArrow={item.showArrow}
                 color={item.color}
+                rightElement={item.rightElement}
               />
             ))}
           </View>

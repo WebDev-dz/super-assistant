@@ -19,8 +19,10 @@ import {
   Form,
   FormField,
   FormInput,
+  FormItem,
 } from '~/components/ui/form';
 import { Text } from '~/components/ui/text';
+import { useColorScheme } from '@/lib/useColorScheme';
 import db from '@/db';
 
 // Form validation schema
@@ -42,6 +44,8 @@ const SignInScreen = () => {
 //   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: 'oauth_apple' });
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const form = useForm<z.infer<typeof signInFormSchema>>({
     resolver: zodResolver(signInFormSchema),
@@ -113,7 +117,7 @@ const SignInScreen = () => {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
     >
       <ScrollView 
         contentContainerStyle={{ 
@@ -133,10 +137,10 @@ const SignInScreen = () => {
             <View className="w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-4">
               <Ionicons name="checkmark-done" size={32} color="white" />
             </View>
-            <Text className="text-3xl font-bold text-gray-900 mb-2">
+            <Text className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Welcome Back
             </Text>
-            <Text className="text-gray-600 text-center text-base">
+            <Text className={`text-center text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Sign in to continue managing your goals and todos with AI assistance
             </Text>
           </View>
@@ -202,9 +206,9 @@ const SignInScreen = () => {
 
           {/* Divider */}
           <View className="flex-row items-center mb-6">
-            <View className="flex-1 h-px bg-gray-200" />
-            <Text className="px-4 text-gray-500 text-sm">Or continue with</Text>
-            <View className="flex-1 h-px bg-gray-200" />
+            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
+            <Text className={`px-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Or continue with</Text>
+            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
           </View>
 
           {/* Social Sign In Buttons */}
@@ -255,7 +259,7 @@ const SignInScreen = () => {
 
           {/* Sign Up Link */}
           <View className="flex-row justify-center items-center mt-auto">
-            <Text className="text-gray-600 text-base">
+            <Text className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
               Don't have an account? 
             </Text>
             <TouchableOpacity 
