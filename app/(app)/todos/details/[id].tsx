@@ -8,7 +8,6 @@ import { Checkbox } from '~/components/ui/checkbox';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import { useHandlers } from '@/hooks/data-provider';
 import { useColorScheme } from '@/lib/useColorScheme';
-import TodoForm, { TodoFormSchema } from '@/components/TodoForm';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Task } from '@/lib/types';
@@ -20,7 +19,7 @@ type FormValues = {
   milestoneId?: string;
 };
 
-export default function TodoDetailsScreen() {
+export default function TodoDetailsScreen(props: any) {
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
   const taskId = params.id ?? '';
@@ -31,7 +30,10 @@ export default function TodoDetailsScreen() {
   const tasks = state.tasks ?? [];
   const milestones = state.milestones ?? [];
 
-  const task: Task | undefined = useMemo(() => tasks.find((t) => t.id === taskId), [tasks, taskId]);
+  console.log({props});
+  console.log("TodosDetailsScreen state:", state);
+
+  const task: Task | undefined = useMemo(() => tasks.find((t) => t.id == taskId), [tasks, taskId]);
 
   const milestoneMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -41,21 +43,7 @@ export default function TodoDetailsScreen() {
 
   const [editOpen, setEditOpen] = useState(false);
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(TodoFormSchema),
-    defaultValues: task ? {
-      title: task.title,
-      description: task.description ?? '',
-      priority: task.priority,
-      milestoneId: task.milestoneId ?? undefined,
-    } : { title: '', description: '', priority: 'low', milestoneId: undefined },
-    values: task ? {
-      title: task.title,
-      description: task.description ?? '',
-      priority: task.priority,
-      milestoneId: task.milestoneId ?? undefined,
-    } : undefined,
-  });
+  
 
   async function handleToggleComplete() {
     if (!task) return;
@@ -151,26 +139,7 @@ export default function TodoDetailsScreen() {
             <DialogTitle>Edit Task</DialogTitle>
             <DialogDescription>Update task details</DialogDescription>
           </DialogHeader>
-          <TodoForm
-            form={form}
-            milestoneOptions={milestones.map((m) => ({ value: m.id, label: m.title }))}
-            submitLabel="Save Changes"
-            onSubmit={async (values) => {
-              try {
-                await updateTask({
-                  id: task.id,
-                  title: values.title,
-                  description: values.description,
-                  priority: values.priority as any,
-                  milestoneId: (values.milestoneId ?? '') as any,
-                  updatedAt: Date.now(),
-                });
-                setEditOpen(false);
-              } catch {
-                Alert.alert('Error', 'Failed to update task');
-              }
-            }}
-          />
+          
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="ghost">

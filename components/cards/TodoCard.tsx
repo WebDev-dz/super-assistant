@@ -17,7 +17,15 @@ interface TodoCardProps {
   isDark: boolean;
 }
 
-const TodoCard: React.FC<TodoCardProps> = ({ task, milestoneMap, onToggleComplete, onDelete, onPress, onLongPress, isDark }) => {
+const TodoCard: React.FC<TodoCardProps> = ({
+  task,
+  milestoneMap,
+  onToggleComplete,
+  onDelete,
+  onPress,
+  onLongPress,
+  isDark
+}) => {
   const priorityColors: Record<Priority, string> = {
     low: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
@@ -29,21 +37,22 @@ const TodoCard: React.FC<TodoCardProps> = ({ task, milestoneMap, onToggleComplet
     <Card className={`mb-3 mx-3 rounded-lg shadow-md ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
       <Pressable onPress={() => onPress?.(task)} onLongPress={() => onLongPress?.(task)}>
         <CardHeader className="flex-row items-center justify-between p-4">
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center gap-3 flex-1 min-w-0">
             <Checkbox
               checked={task.completed}
               onCheckedChange={() => onToggleComplete(task)}
               className={`${isDark ? 'border-gray-600' : 'border-gray-300'}`}
             />
-            <View>
+            <View className="flex-1 min-w-0">
               <Text
                 className={`text-base font-medium ${
                   task.completed ? 'line-through text-muted-foreground' : isDark ? 'text-white' : 'text-gray-900'
                 }`}
+                numberOfLines={2}
               >
                 {task.title}
               </Text>
-              <View className="flex-row items-center gap-2 mt-1">
+              <View className="flex-row items-center gap-2 mt-1 flex-wrap">
                 <Text className={`text-xs ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>
                   {task.milestoneId ? milestoneMap[task.milestoneId] : 'Unassigned'}
                 </Text>
@@ -56,14 +65,18 @@ const TodoCard: React.FC<TodoCardProps> = ({ task, milestoneMap, onToggleComplet
                 </Text>
               </View>
               <View className="flex-row items-center gap-2 mt-1">
-                 <Calendar size={18} color={isDark ? '#ef4444' : '#dc2626'} />
+                <Calendar size={18} color={isDark ? '#ef4444' : '#dc2626'} />
                 <Text className={`text-xs ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>
                   {task.dueDate ? (new Date(task.dueDate).toDateString()) : 'Unassigned'}
                 </Text>
-                </View>
+              </View>
             </View>
           </View>
-          <Pressable onPress={() => onDelete(task)}>
+          <Pressable 
+            className="ml-3 p-2" 
+            onPress={() => onDelete(task)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Trash2 size={20} color={isDark ? '#ef4444' : '#dc2626'} />
           </Pressable>
         </CardHeader>

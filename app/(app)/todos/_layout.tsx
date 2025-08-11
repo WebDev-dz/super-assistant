@@ -7,9 +7,7 @@ export default function AppStackLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#FFFFFF',
-        },
+       
         headerTintColor: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
         headerTitleStyle: {
           fontWeight: 'bold',
@@ -31,19 +29,12 @@ export default function AppStackLayout() {
         }}
       />
       <Stack.Screen
-        name="goals"
+        name="details/[id]"
         options={{
-          title: 'Goals',
+          title: 'Todo Details',
           headerShown: true,
         }}
-      />
-      <Stack.Screen
-        name="milestones/index"
-        options={{
-          title: 'Milestones',
-          headerShown: true,
-        }}
-      />
+       />
     </Stack>
   );
 }

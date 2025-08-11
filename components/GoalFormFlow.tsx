@@ -62,12 +62,12 @@ export default function GoalsFlowModal()   {
         fullSchema,
         defaultValues: {
             priority: 'low',
+            title: "Goal Title",
             startDate: new Date().toISOString(),
             targetEndDate: new Date().toISOString(),
             createdAt: new Date().toISOString(),
             overallProgress: 0,
             owner: '',
-            title: '',
             status: 'not_started'
         },
         onSubmit: async (data) => {

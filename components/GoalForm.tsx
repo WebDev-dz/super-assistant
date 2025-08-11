@@ -1,6 +1,7 @@
-import * as React from 'react';
-import { StyleSheet, View } from 'react-native';
-import PagerView from 'react-native-pager-view';
+import * as React from "react";
+import { View, TouchableOpacity, ScrollView } from "react-native";
+import PagerView from "react-native-pager-view";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   Form,
@@ -10,51 +11,227 @@ import {
   FormInput,
   FormRadioGroup,
   FormTextarea,
-} from '~/components/ui/form';
-import { Label } from '~/components/ui/label';
-import { RadioGroupItem } from '~/components/ui/radio-group';
-import { Text } from '~/components/ui/text';
-import { CreateGoal, GoalSchema } from '@/lib/validations';
-import { useFormFlow, UseFormFlowProps } from '@/hooks/useFormFlow';
+} from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
+import { RadioGroupItem } from "~/components/ui/radio-group";
+import { Text } from "~/components/ui/text";
+import { Progress } from "~/components/ui/progress";
+import { CreateGoal, GoalSchema } from "@/lib/validations";
+import { useFormFlow, UseFormFlowProps } from "@/hooks/useFormFlow";
 
-// Status and Priority schemas
-
-
-// Sample data for dropdowns
+// Enhanced categories with icons and colors
 export const categories = [
-  { value: 'personal', label: 'Personal' },
-  { value: 'career', label: 'Career' },
-  { value: 'health', label: 'Health & Fitness' },
-  { value: 'education', label: 'Education' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'business', label: 'Business' },
-  { value: 'relationships', label: 'Relationships' },
-  { value: 'travel', label: 'Travel' },
+  {
+    value: "personal",
+    label: "Personal",
+    icon: "person-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#8B5CF6", // purple-500
+    bgColor: "bg-purple-100",
+    selectedBg: "bg-purple-50",
+    borderColor: "border-purple-500",
+    textColor: "text-purple-600",
+  },
+  {
+    value: "career",
+    label: "Career",
+    icon: "briefcase-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#3B82F6", // blue-500
+    bgColor: "bg-blue-100",
+    selectedBg: "bg-blue-50",
+    borderColor: "border-blue-500",
+    textColor: "text-blue-600",
+  },
+  {
+    value: "health",
+    label: "Health & Fitness",
+    icon: "fitness-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#10B981", // green-500
+    bgColor: "bg-green-100",
+    selectedBg: "bg-green-50",
+    borderColor: "border-green-500",
+    textColor: "text-green-600",
+  },
+  {
+    value: "education",
+    label: "Education",
+    icon: "school-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#F59E0B", // amber-500
+    bgColor: "bg-amber-100",
+    selectedBg: "bg-amber-50",
+    borderColor: "border-amber-500",
+    textColor: "text-amber-600",
+  },
+  {
+    value: "finance",
+    label: "Finance",
+    icon: "card-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#EF4444", // red-500
+    bgColor: "bg-red-100",
+    selectedBg: "bg-red-50",
+    borderColor: "border-red-500",
+    textColor: "text-red-600",
+  },
+  {
+    value: "business",
+    label: "Business",
+    icon: "business-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#6366F1", // indigo-500
+    bgColor: "bg-indigo-100",
+    selectedBg: "bg-indigo-50",
+    borderColor: "border-indigo-500",
+    textColor: "text-indigo-600",
+  },
+  {
+    value: "relationships",
+    label: "Relationships",
+    icon: "heart-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#EC4899", // pink-500
+    bgColor: "bg-pink-100",
+    selectedBg: "bg-pink-50",
+    borderColor: "border-pink-500",
+    textColor: "text-pink-600",
+  },
+  {
+    value: "travel",
+    label: "Travel",
+    icon: "airplane-outline" as keyof typeof Ionicons.glyphMap,
+    color: "#14B8A6", // teal-500
+    bgColor: "bg-teal-100",
+    selectedBg: "bg-teal-50",
+    borderColor: "border-teal-500",
+    textColor: "text-teal-600",
+  },
 ];
 
-
-
-
-
 // Full schema
-const fullSchema = GoalSchema
-
+const fullSchema = GoalSchema;
 
 interface GoalFormComponentProps {
   formFlow: ReturnType<typeof useFormFlow<typeof fullSchema>>;
   onGoalCreated?: (goalData: CreateGoal) => void;
 }
 
-export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormComponentProps) {
-  const { form, navigationPanel, goToNextStep, goToPreviousStep, onSubmit, currentStep } = formFlow;
-  
+// Custom Category Selector Component
+interface CategorySelectorProps {
+  selectedValue: string | null;
+  onValueChange: (value: string) => void;
+}
+
+const CategorySelector: React.FC<CategorySelectorProps> = ({
+  selectedValue,
+  onValueChange,
+}) => {
+  return (
+    <View className="mb-4">
+      <Text className="text-base font-semibold mb-1 text-gray-800">
+        Category
+      </Text>
+      <Text className="text-sm text-gray-600 mb-4">
+        Categorize your goal for better organization.
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 4, gap: 12 }}
+        className="-mx-1"
+      >
+        {categories.map((category) => {
+          const isSelected = selectedValue === category.value;
+          return (
+            <TouchableOpacity
+              key={category.value}
+              className={`items-center justify-center py-4 px-3 rounded-xl border-2 bg-white min-w-[90px] mx-1 shadow-sm ${
+                isSelected
+                  ? `${category.borderColor} ${category.selectedBg} shadow-md`
+                  : "border-gray-200"
+              }`}
+              onPress={() => onValueChange(category.value)}
+              activeOpacity={0.7}
+            >
+              <View
+                className={`w-12 h-12 rounded-full items-center justify-center mb-2 ${
+                  isSelected ? "" : category.bgColor
+                }`}
+                style={
+                  isSelected ? { backgroundColor: category.color } : undefined
+                }
+              >
+                <Ionicons
+                  name={category.icon}
+                  size={24}
+                  color={isSelected ? "#ffffff" : category.color}
+                />
+              </View>
+              <Text
+                className={`text-xs text-center font-medium ${
+                  isSelected ? category.textColor : "text-gray-600"
+                }`}
+              >
+                {category.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
+
+// Progress Bar Component
+interface ProgressBarProps {
+  currentStep: number;
+  totalSteps: number;
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({
+  currentStep,
+  totalSteps,
+}) => {
+  const progress = (currentStep / totalSteps) * 100;
 
   return (
-   
+    <View className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <View className="flex-row justify-between items-center mb-2">
+        <Text className="text-sm font-medium text-gray-700">
+          Step {currentStep + 1} of {totalSteps}
+        </Text>
+        <Text className="text-sm font-semibold text-purple-600">
+          {Math.round(progress)}%
+        </Text>
+      </View>
+      <View className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <View
+          className="h-full bg-purple-600 rounded-full transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </View>
+    </View>
+  );
+};
+
+export default function GoalFormComponent({
+  formFlow,
+  onGoalCreated,
+}: GoalFormComponentProps) {
+  const {
+    form,
+    navigationPanel,
+    goToNextStep,
+    goToPreviousStep,
+    onSubmit,
+    currentStep,
+  } = formFlow;
+  const totalSteps = 4;
+
+  return (
+    <View className="flex-1 h-[400px]">
+      {/* Progress Bar */}
+      <ProgressBar currentStep={currentStep} totalSteps={totalSteps} />
+
       <PagerView
         ref={navigationPanel.ref}
-        style={styles.pagerView}
-        className='h-full'
+        className="flex-1 h-[400px]"
+        style={{ height: 400 }}
         initialPage={0}
         pageMargin={10}
         scrollEnabled={navigationPanel.scrollEnabled}
@@ -64,7 +241,12 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
         onPageScrollStateChanged={navigationPanel.onPageScrollStateChanged}
       >
         {/* Step 1: Title and Description */}
-        <View style={styles.formSection} key="1" collapsable={false}>
+        <View
+          style={{ height: 400 }}
+          className="px-4 gap-4 py-2"
+          key="1"
+          collapsable={false}
+        >
           <Form {...form}>
             <FormField
               control={form.control}
@@ -88,23 +270,51 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                   placeholder="Describe your goal in detail..."
                   description="Provide additional context and details about your goal."
                   {...field}
-                  value={field.value ?? ''}
+                  value={field.value ?? ""}
                 />
               )}
             />
           </Form>
         </View>
 
-        {/* Step 2: Status, Priority, and Category */}
-        <View style={styles.formSection} key="2" collapsable={false}>
+        {/* Step 2: Category Selection Only */}
+        <View 
+         style={{ height: 400 }}
+        className="px-4 gap-4 py-2" key="2" collapsable={false}>
+          <Form {...form}>
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field: { value, onChange } }) => (
+                <CategorySelector
+                  selectedValue={value}
+                  onValueChange={(categoryValue) => {
+                    form.setValue("category", categoryValue);
+                  }}
+                />
+              )}
+            />
+          </Form>
+        </View>
+
+        {/* Step 3: Status and Priority */}
+        <View  style={{ height: 400 }}
+         className="px-4 gap-4 py-2 h-auto" key="3" collapsable={false}>
           <Form {...form}>
             <FormField
               control={form.control}
               name="status"
               render={({ field }) => {
-                function onLabelPress(label: 'not_started' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled') {
+                function onLabelPress(
+                  label:
+                    | "not_started"
+                    | "in_progress"
+                    | "on_hold"
+                    | "completed"
+                    | "cancelled"
+                ) {
                   return () => {
-                    form.setValue('status', label);
+                    form.setValue("status", label);
                   };
                 }
                 return (
@@ -114,15 +324,26 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                     className="gap-4 flex-row"
                     {...field}
                   >
-                    {(['not_started', 'in_progress', 'on_hold', 'completed', 'cancelled'] as const).map((value) => (
+                    {(
+                      [
+                        "not_started",
+                        "in_progress",
+                        "on_hold",
+                        "completed",
+                        "cancelled",
+                      ] as const
+                    ).map((value) => (
                       <View key={value} className="flex-row gap-2 items-center">
-                        <RadioGroupItem aria-labelledby={`status-label-for-${value}`} value={value} />
+                        <RadioGroupItem
+                          aria-labelledby={`status-label-for-${value}`}
+                          value={value}
+                        />
                         <Label
                           nativeID={`status-label-for-${value}`}
                           className="capitalize"
                           onPress={onLabelPress(value)}
                         >
-                          {value.replace('_', ' ')}
+                          {value.replace("_", " ")}
                         </Label>
                       </View>
                     ))}
@@ -134,9 +355,11 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
               control={form.control}
               name="priority"
               render={({ field }) => {
-                function onLabelPress(label: 'low' | 'medium' | 'high' | 'urgent') {
+                function onLabelPress(
+                  label: "low" | "medium" | "high" | "urgent"
+                ) {
                   return () => {
-                    form.setValue('priority', label);
+                    form.setValue("priority", label);
                   };
                 }
                 return (
@@ -146,44 +369,35 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                     className="gap-4 flex-row"
                     {...field}
                   >
-                    {(['low', 'medium', 'high', 'urgent'] as const).map((value) => (
-                      <View key={value} className="flex-row gap-2 items-center">
-                        <RadioGroupItem aria-labelledby={`priority-label-for-${value}`} value={value} />
-                        <Label
-                          nativeID={`priority-label-for-${value}`}
-                          className="capitalize"
-                          onPress={onLabelPress(value)}
+                    {(["low", "medium", "high", "urgent"] as const).map(
+                      (value) => (
+                        <View
+                          key={value}
+                          className="flex-row gap-2 items-center"
                         >
-                          {value}
-                        </Label>
-                      </View>
-                    ))}
+                          <RadioGroupItem
+                            aria-labelledby={`priority-label-for-${value}`}
+                            value={value}
+                          />
+                          <Label
+                            nativeID={`priority-label-for-${value}`}
+                            className="capitalize"
+                            onPress={onLabelPress(value)}
+                          >
+                            {value}
+                          </Label>
+                        </View>
+                      )
+                    )}
                   </FormRadioGroup>
                 );
               }}
             />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field: { value, ...fields} }) => (
-                <FormCombobox
-                  label="Category"
-                  description="Categorize your goal for better organization."
-                  items={categories}
-                  {...fields}
-                  onChange={(value) => {
-                    form.setValue('category', value?.value)
-                    ;}}
-                  selectedItem={categories.find((item) => item.value === value) ?? null}
-                  value={value ?? null}
-                />
-              )}
-            />
           </Form>
         </View>
 
-        {/* Step 3: Dates */}
-        <View style={styles.formSection} key="3" collapsable={false}>
+        {/* Step 4: Dates, Budget and Hours */}
+        <View className="px-4 gap-4 py-2 h-auto" key="4" collapsable={false}>
           <Form {...form}>
             <FormField
               control={form.control}
@@ -207,12 +421,6 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                 />
               )}
             />
-          </Form>
-        </View>
-
-        {/* Step 4: Budget and Hours */}
-        <View style={styles.formSection} key="4" collapsable={false}>
-          <Form {...form}>
             <FormField
               control={form.control}
               name="budget"
@@ -223,7 +431,7 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                   description="Optional budget allocated for this goal (in your currency)."
                   keyboardType="numeric"
                   {...field}
-                  value={field.value ?? ''}
+                  value={field.value ?? ""}
                 />
               )}
             />
@@ -237,51 +445,13 @@ export default function GoalFormComponent({ formFlow, onGoalCreated }: GoalFormC
                   description="How many hours do you estimate this goal will take?"
                   keyboardType="numeric"
                   {...field}
-                  value={field.value ?? ''}
+                  value={field.value ?? ""}
                 />
               )}
             />
           </Form>
         </View>
-
       </PagerView>
-
-      
-   
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    // flex: 1,
-  },
-  pagerView: {
-    // flex: 1,
-    height: 300,
-    // minHeight: "100%",
-    // height: "auto"
-  },
-  formSection: {
-    paddingHorizontal: 12,
-    gap: 12,
-    // collapsable: false,
-    height: "auto"
-    // paddingVertical: 16,
-    // height: "100%"
-    // flexGrow: 1,
-    // minHeight: 200,
-  },
-  buttonContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 16,
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  secondaryButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-});

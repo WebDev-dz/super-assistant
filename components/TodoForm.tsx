@@ -1,41 +1,53 @@
-import * as React from 'react';
-import { View } from 'react-native';
-import { z } from 'zod';
-import { UseFormReturn } from 'react-hook-form';
-import { Button, buttonTextVariants } from '~/components/ui/button';
-import { Text } from '~/components/ui/text';
-import { Form, FormField, FormInput, FormTextarea, FormRadioGroup, FormCombobox } from '~/components/ui/form';
-import { RadioGroupItem } from '~/components/ui/radio-group';
-import { Label } from '~/components/ui/label';
-
-export const TodoFormSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  milestoneId: z.string().optional(),
-});
+import * as React from "react";
+import { View } from "react-native";
+import { z } from "zod";
+import { UseFormReturn } from "react-hook-form";
+import { Button, buttonTextVariants } from "~/components/ui/button";
+import { Text } from "~/components/ui/text";
+import {
+  Form,
+  FormField,
+  FormInput,
+  FormTextarea,
+  FormRadioGroup,
+  FormCombobox,
+  FormDatePicker,
+  FormSwitch,
+  FormDateTimePicker,
+} from "~/components/ui/form";
+import { RadioGroupItem } from "~/components/ui/radio-group";
+import { Label } from "~/components/ui/label";
+import { CreateTaskSchema } from "@/lib/validations";
 
 type ComboboxOption = { value: string; label: string };
 
-type TodoFormProps<TValues extends Record<string, any> = any> = {
+// Priority schema
+
+
+
+export type TodoFormValues = z.infer<typeof CreateTaskSchema>;
+
+type TodoFormProps<TValues extends Record<string, any> = TodoFormValues> = {
   form: UseFormReturn<TValues>;
   onSubmit: (values: TValues) => void;
   milestoneOptions?: ComboboxOption[];
   submitLabel?: string;
 };
 
-export default function TodoForm<TValues extends Record<string, any>>({
+export default function TodoForm<TValues extends Record<string, any> = TodoFormValues>({
   form,
   onSubmit,
   milestoneOptions = [],
-  submitLabel = 'Save Task',
+  submitLabel = "Save Task",
 }: TodoFormProps<TValues>) {
+  const [hasAlarm, setHasAlarm] = React.useState(false);
+
   return (
-    <Form {...form}>
+    <Form {...form} >
       <View className="gap-4">
         <FormField
           control={form.control}
-          name={"title" as any}
+          name={"title" as any }
           render={({ field }) => (
             <FormInput
               label="Task Title"
@@ -62,13 +74,37 @@ export default function TodoForm<TValues extends Record<string, any>>({
 
         <FormField
           control={form.control}
+          name={"dueDate" as any}
+          render={({ field }) => (
+            <FormDatePicker
+              label="Due Date"
+              description="When do you want to complete this task?"
+              {...field}
+            />
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name={"priority" as any}
           render={({ field }) => (
-            <FormRadioGroup label="Priority" description="How important is this task?" {...field} className="gap-4 flex-row">
-              {(['low', 'medium', 'high', 'urgent'] as const).map((value) => (
+            <FormRadioGroup
+              label="Priority"
+              description="How important is this task?"
+              {...field}
+              className="gap-4 flex-row"
+            >
+              {(["low", "medium", "high", "urgent"] as const).map((value) => (
                 <View key={value} className="flex-row gap-2 items-center">
-                  <RadioGroupItem aria-labelledby={`priority-label-for-${value}`} value={value} />
-                  <Label nativeID={`priority-label-for-${value}`} className="capitalize" onPress={() => field.onChange(value)}>
+                  <RadioGroupItem
+                    aria-labelledby={`priority-label-for-${value}`}
+                    value={value}
+                  />
+                  <Label
+                    nativeID={`priority-label-for-${value}`}
+                    className="capitalize"
+                    onPress={() => field.onChange(value)}
+                  >
                     {value}
                   </Label>
                 </View>
@@ -77,12 +113,33 @@ export default function TodoForm<TValues extends Record<string, any>>({
           )}
         />
 
+        <FormField
+          control={form.control}
+          name={"estimatedHours" as any}
+          render={({ field }) => (
+            <FormInput
+              label="Estimated Hours"
+              placeholder="How long will this take?"
+              description="Optional time estimate"
+              keyboardType="numeric"
+              {...field}
+              value={field.value?.toString()}
+              onChangeText={(text) => {
+                const num = parseFloat(text);
+                field.onChange(isNaN(num) ? undefined : num);
+              }}
+            />
+          )}
+        />
+
         {milestoneOptions.length > 0 && (
           <FormField
             control={form.control}
             name={"milestoneId" as any}
             render={({ field }) => {
-              const selected = milestoneOptions.find((opt) => opt.value === field.value) ?? null;
+              const selected =
+                milestoneOptions.find((opt) => opt.value === field.value) ??
+                null;
               return (
                 <FormCombobox
                   label="Milestone"
@@ -91,19 +148,99 @@ export default function TodoForm<TValues extends Record<string, any>>({
                   name={field.name as any}
                   onBlur={field.onBlur}
                   value={selected as any}
-                  onChange={(opt) => field.onChange((opt?.value ?? '') as any)}
+                  onChange={(opt) => field.onChange((opt?.value ?? "") as any)}
                 />
               );
             }}
           />
         )}
 
-        <Button onPress={form.handleSubmit(onSubmit)}>
+        {/* Alarm Settings */}
+        <FormField
+          control={form.control}
+          name={"hasAlarm" as any}
+          render={({ field }) => (
+            <FormSwitch
+              {...field}
+              label="Set Alarm"
+              description="Get notified about this task"
+              value={field.value || hasAlarm}
+              onChange={(checked) => {
+                field.onChange(checked);
+                setHasAlarm(checked);
+              }}
+            />
+          )}
+        />
+
+        {(hasAlarm || form.watch("hasAlarm" as any)) && (
+          <>
+            <FormField
+              control={form.control}
+              name={"alarmMethod" as any}
+              render={({ field }) => (
+                <FormRadioGroup
+                  label="Alarm Method"
+                  description="How should you be notified?"
+                  {...field}
+                  className="gap-4 flex-row"
+                >
+                  {(["alert", "alarm"] as const).map((value) => (
+                    <View key={value} className="flex-row gap-2 items-center">
+                      <RadioGroupItem
+                        aria-labelledby={`alarm-method-label-for-${value}`}
+                        value={value}
+                      />
+                      <Label
+                        nativeID={`alarm-method-label-for-${value}`}
+                        className="capitalize"
+                        onPress={() => field.onChange(value)}
+                      >
+                        {value}
+                      </Label>
+                    </View>
+                  ))}
+                </FormRadioGroup>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={"alarmOffset" as any}
+              render={({ field }) => (
+                <FormInput
+                  label="Alarm Offset (minutes)"
+                  placeholder="15"
+                  description="How many minutes before the due date?"
+                  keyboardType="numeric"
+                  {...field}
+                  value={field.value?.toString()}
+                  onChangeText={(text) => {
+                    const num = parseInt(text);
+                    field.onChange(isNaN(num) ? undefined : num);
+                  }}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={"alarmAbsoluteDate" as any}
+              render={({ field }) => (
+                <FormDateTimePicker
+                  label="Custom Alarm Date"
+                  description="Or set a specific alarm date/time"
+                  {...field}
+                />
+              )}
+            />
+          </>
+        )}
+
+        <Button onPress={form.handleSubmit(onSubmit, console.error)}>
           <Text className={buttonTextVariants({})}>{submitLabel}</Text>
         </Button>
       </View>
     </Form>
   );
 }
-
-

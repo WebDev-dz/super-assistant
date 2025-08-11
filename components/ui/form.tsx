@@ -12,8 +12,10 @@ import {
   Noop,
   useFormContext,
 } from 'react-hook-form';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
+// For Expo projects, use: import DateTimePicker from 'expo-date-time-picker';
+import DateTimePicker from "@react-native-community/datetimepicker"
 import {
   BottomSheet,
   BottomSheetCloseTrigger,
@@ -35,6 +37,8 @@ import { Calendar as CalendarIcon } from '~/lib/icons/Calendar';
 import { X } from '~/lib/icons/X';
 import { cn } from '~/lib/utils';
 import { Text } from './text';
+import { useColorScheme } from '@/lib/useColorScheme';
+import { Clock1Icon } from 'lucide-react-native';
 
 const Form = FormProvider;
 
@@ -349,7 +353,8 @@ const FormDatePicker = React.forwardRef<
   FormItemProps<typeof Calendar, string>
 >(({ label, description, value, onChange, ...props }, ref) => {
   const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
-
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   return (
     <FormItem>
       {!!label && <FormLabel nativeID={formItemNativeID}>{label}</FormLabel>}
@@ -402,9 +407,9 @@ const FormDatePicker = React.forwardRef<
         <BottomSheetContent>
           <BottomSheetView hadHeader={false} className='pt-2'>
             <Calendar
-              style={{ height: 358 }}
+              style={{ height: 358,  }}
                   // @ts-ignore
-
+              
               onDayPress={(day) => {
                 onChange?.(day.dateString === value ? '' : day.dateString);
               }}
@@ -413,6 +418,15 @@ const FormDatePicker = React.forwardRef<
                   selected: true,
                 },
               }}
+
+              theme = {{
+                textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+                timeLabel: {
+                  color: isDark ? '#9CA3AF' : '#6B7280',
+                }
+                
+              }}
+              
               current={value} // opens calendar on selected date
               {...props}
             />
@@ -433,6 +447,226 @@ const FormDatePicker = React.forwardRef<
 });
 
 FormDatePicker.displayName = 'FormDatePicker';
+
+// Fixed FormTimePicker - not nested in BottomSheet
+const FormTimePicker = React.forwardRef<
+  React.ComponentRef<typeof Button>,
+  FormItemProps<typeof Button, string> & {
+    mode?: 'time' | 'countdown';
+    is24Hour?: boolean;
+    display?: 'default' | 'spinner' | 'compact';
+  }
+>(({ label, description, value, onChange, mode = 'time', is24Hour = true, display = 'default', ...props }, ref) => {
+  const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
+  const [showTimePicker, setShowTimePicker] = React.useState(false);
+
+  const formatTime = (timeString: string) => {
+    if (!timeString) return 'Pick a time';
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: !is24Hour 
+      });
+    } catch {
+      return 'Pick a time';
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    
+    if (selectedTime && event.type !== 'dismissed') {
+      onChange?.(selectedTime.toISOString());
+    }
+  };
+
+  return (
+    <FormItem>
+      {!!label && <FormLabel nativeID={formItemNativeID}>{label}</FormLabel>}
+      
+      <Button
+        variant='outline'
+        className='flex-row gap-3 justify-start px-3 relative'
+        ref={ref!}
+        aria-labelledby={formItemNativeID}
+        aria-describedby={
+          !error
+            ? `${formDescriptionNativeID}`
+            : `${formDescriptionNativeID} ${formMessageNativeID}`
+        }
+        aria-invalid={!!error}
+        onPress={() => setShowTimePicker(true)}
+        {...props}
+      >
+        {({ pressed }) => (
+          <>
+            <Clock1Icon
+              className={buttonTextVariants({
+                variant: 'outline',
+                className: cn(!value && 'opacity-80', pressed && 'opacity-60'),
+              })}
+              size={18}
+            />
+            <Text
+              className={buttonTextVariants({
+                variant: 'outline',
+                className: cn('font-normal', !value && 'opacity-70', pressed && 'opacity-50'),
+              })}
+            >
+              {formatTime(value)}
+            </Text>
+            {!!value && (
+              <Button
+                className='absolute right-0 active:opacity-70 native:pr-3'
+                variant='ghost'
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onChange?.('');
+                }}
+              >
+                <X size={18} className='text-muted-foreground text-xs' />
+              </Button>
+            )}
+          </>
+        )}
+      </Button>
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={value ? new Date(value) : new Date()}
+          mode={mode}
+          is24Hour={is24Hour}
+          display={display}
+          onChange={handleTimeChange}
+        />
+      )}
+      
+      {!!description && <FormDescription>{description}</FormDescription>}
+      <FormMessage />
+    </FormItem>
+  );
+});
+
+FormTimePicker.displayName = 'FormTimePicker';
+
+// New FormDateTimePicker component
+const FormDateTimePicker = React.forwardRef<
+  React.ComponentRef<typeof Button>,
+  FormItemProps<typeof Button, string> & {
+    is24Hour?: boolean;
+    display?: 'default' | 'spinner' | 'compact';
+  }
+>(({ label, description, value, onChange, is24Hour = true, display = 'default', ...props }, ref) => {
+  const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
+  const [showDateTimePicker, setShowDateTimePicker] = React.useState(false);
+
+  const formatDateTime = (dateTimeString: string) => {
+    if (!dateTimeString) return 'Pick date & time';
+    try {
+      const date = new Date(dateTimeString);
+      const dateStr = date.toLocaleDateString();
+      const timeStr = date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: !is24Hour 
+      });
+      return `${dateStr} ${timeStr}`;
+    } catch {
+      return 'Pick date & time';
+    }
+  };
+
+  const handleDateTimeChange = (event: any, selectedDateTime?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDateTimePicker(false);
+    }
+    
+    if (selectedDateTime && event.type !== 'dismissed') {
+      onChange?.(selectedDateTime.toISOString());
+    }
+  };
+
+  return (
+    <FormItem>
+      {!!label && <FormLabel nativeID={formItemNativeID}>{label}</FormLabel>}
+      
+      <Button
+        variant='outline'
+        className='flex-row gap-3 justify-start px-3 relative'
+        ref={ref!}
+        aria-labelledby={formItemNativeID}
+        aria-describedby={
+          !error
+            ? `${formDescriptionNativeID}`
+            : `${formDescriptionNativeID} ${formMessageNativeID}`
+        }
+        aria-invalid={!!error}
+        onPress={() => setShowDateTimePicker(true)}
+        {...props}
+      >
+        {({ pressed }) => (
+          <>
+            <View className='flex-row gap-1'>
+              <CalendarIcon
+                className={buttonTextVariants({
+                  variant: 'outline',
+                  className: cn(!value && 'opacity-80', pressed && 'opacity-60'),
+                })}
+                size={16}
+              />
+              <Clock1Icon
+                className={buttonTextVariants({
+                  variant: 'outline',
+                  className: cn(!value && 'opacity-80', pressed && 'opacity-60'),
+                })}
+                size={16}
+              />
+            </View>
+            <Text
+              className={buttonTextVariants({
+                variant: 'outline',
+                className: cn('font-normal', !value && 'opacity-70', pressed && 'opacity-50'),
+              })}
+            >
+              {formatDateTime(value)}
+            </Text>
+            {!!value && (
+              <Button
+                className='absolute right-0 active:opacity-70 native:pr-3'
+                variant='ghost'
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onChange?.('');
+                }}
+              >
+                <X size={18} className='text-muted-foreground text-xs' />
+              </Button>
+            )}
+          </>
+        )}
+      </Button>
+
+      {showDateTimePicker && (
+        <DateTimePicker
+          value={value ? new Date(value) : new Date()}
+          mode="datetime"
+          is24Hour={is24Hour}
+          display={display}
+          onChange={handleDateTimeChange}
+        />
+      )}
+      
+      {!!description && <FormDescription>{description}</FormDescription>}
+      <FormMessage />
+    </FormItem>
+  );
+});
+
+FormDateTimePicker.displayName = 'FormDateTimePicker';
 
 const FormRadioGroup = React.forwardRef<
   React.ComponentRef<typeof RadioGroup>,
@@ -606,6 +840,7 @@ export {
   FormCheckbox,
   FormCombobox,
   FormDatePicker,
+  FormDateTimePicker,
   FormDescription,
   FormField,
   FormInput,
@@ -616,5 +851,6 @@ export {
   FormSelect,
   FormSwitch,
   FormTextarea,
+  FormTimePicker,
   useFormField,
 };

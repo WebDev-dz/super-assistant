@@ -21,7 +21,7 @@ export default function MenuLayout() {
         name="index"
         options={{
           title: 'Menu',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

@@ -79,6 +79,10 @@ const _schema = i.schema({
       dueDate: i.date().optional(),
       createdAt: i.date(),
       updatedAt: i.date().optional(),
+
+      // Alarm
+      hasAlarm: i.boolean().optional(),
+      alarm: i.json().optional(),
       
       // Time tracking
       estimatedHours: i.number().optional(),
@@ -483,7 +487,6 @@ type _AppSchema = typeof _schema;
 interface AppSchema extends _AppSchema {}
 const schema: AppSchema = _schema;
 
-type Goal = ReturnType<AppSchema['entities']['goals']["asType"]>["attrs"]; 
 
 export type { AppSchema };
 export default schema;
