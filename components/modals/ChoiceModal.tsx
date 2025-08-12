@@ -5,7 +5,7 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import React, { useCallback } from "react";
 import { BottomSheetView } from "../deprecated-ui/bottom-sheet";
-import { getRoleValue, OptionButton } from "../ui/option-button";
+import { getRoleValue, OptionButton } from "@/components/ui/option-button";
 import { useModalManager } from "@/hooks/useModalManager";
 import { id } from "@instantdb/react-native";
 import { defaultGoal, defaultMilestone, defaultTask } from "@/lib/constants";

@@ -1,8 +1,8 @@
 import { MilestoneSchema } from "@/lib/validations";
 import { TouchableOpacity, View, Text, Pressable } from "react-native";
 import z from "zod";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
-import { Button, buttonTextVariants } from "./ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Button, buttonTextVariants } from "@/components/ui/button";
 
 
 
