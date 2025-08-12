@@ -4,7 +4,7 @@ import { Text } from '~/components/ui/text';
 import { useHandlers } from '@/hooks/data-provider';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { useModalManager } from '@/hooks/useModalManager';
-import { MileStoneCard } from '@/components/MileStoneCard';
+import { MileStoneCard } from '@/components/cards/MileStoneCard';
 import MilestoneDetailsModal from '@/components/modals/MilestoneDetailsModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

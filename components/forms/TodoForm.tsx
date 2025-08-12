@@ -18,12 +18,11 @@ import {
 import { RadioGroupItem } from "~/components/ui/radio-group";
 import { Label } from "~/components/ui/label";
 import { CreateTaskSchema } from "@/lib/validations";
+import AlarmForm from "./AlarmForm";
 
 type ComboboxOption = { value: string; label: string };
 
 // Priority schema
-
-
 
 export type TodoFormValues = z.infer<typeof CreateTaskSchema>;
 
@@ -40,14 +39,12 @@ export default function TodoForm<TValues extends Record<string, any> = TodoFormV
   milestoneOptions = [],
   submitLabel = "Save Task",
 }: TodoFormProps<TValues>) {
-  const [hasAlarm, setHasAlarm] = React.useState(false);
-
   return (
-    <Form {...form} >
+    <Form {...form}>
       <View className="gap-4">
         <FormField
           control={form.control}
-          name={"title" as any }
+          name={"title" as any}
           render={({ field }) => (
             <FormInput
               label="Task Title"
@@ -156,86 +153,7 @@ export default function TodoForm<TValues extends Record<string, any> = TodoFormV
         )}
 
         {/* Alarm Settings */}
-        <FormField
-          control={form.control}
-          name={"hasAlarm" as any}
-          render={({ field }) => (
-            <FormSwitch
-              {...field}
-              label="Set Alarm"
-              description="Get notified about this task"
-              value={field.value || hasAlarm}
-              onChange={(checked) => {
-                field.onChange(checked);
-                setHasAlarm(checked);
-              }}
-            />
-          )}
-        />
-
-        {(hasAlarm || form.watch("hasAlarm" as any)) && (
-          <>
-            <FormField
-              control={form.control}
-              name={"alarmMethod" as any}
-              render={({ field }) => (
-                <FormRadioGroup
-                  label="Alarm Method"
-                  description="How should you be notified?"
-                  {...field}
-                  className="gap-4 flex-row"
-                >
-                  {(["alert", "alarm"] as const).map((value) => (
-                    <View key={value} className="flex-row gap-2 items-center">
-                      <RadioGroupItem
-                        aria-labelledby={`alarm-method-label-for-${value}`}
-                        value={value}
-                      />
-                      <Label
-                        nativeID={`alarm-method-label-for-${value}`}
-                        className="capitalize"
-                        onPress={() => field.onChange(value)}
-                      >
-                        {value}
-                      </Label>
-                    </View>
-                  ))}
-                </FormRadioGroup>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={"alarmOffset" as any}
-              render={({ field }) => (
-                <FormInput
-                  label="Alarm Offset (minutes)"
-                  placeholder="15"
-                  description="How many minutes before the due date?"
-                  keyboardType="numeric"
-                  {...field}
-                  value={field.value?.toString()}
-                  onChangeText={(text) => {
-                    const num = parseInt(text);
-                    field.onChange(isNaN(num) ? undefined : num);
-                  }}
-                />
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name={"alarmAbsoluteDate" as any}
-              render={({ field }) => (
-                <FormDateTimePicker
-                  label="Custom Alarm Date"
-                  description="Or set a specific alarm date/time"
-                  {...field}
-                />
-              )}
-            />
-          </>
-        )}
+        <AlarmForm form={form} />
 
         <Button onPress={form.handleSubmit(onSubmit, console.error)}>
           <Text className={buttonTextVariants({})}>{submitLabel}</Text>

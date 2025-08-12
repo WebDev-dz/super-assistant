@@ -15,7 +15,7 @@ import {
 import { View, Platform } from 'react-native';
 import Animated, { FadeInDown, FadeOut } from 'react-native-reanimated';
 // For Expo projects, use: import DateTimePicker from 'expo-date-time-picker';
-import DateTimePicker from "@react-native-community/datetimepicker"
+import RNDateTimePicker from "@react-native-community/datetimepicker"
 import {
   BottomSheet,
   BottomSheetCloseTrigger,
@@ -475,14 +475,20 @@ const FormTimePicker = React.forwardRef<
   };
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
-    }
+    // Always dismiss the picker first
+    setShowTimePicker(false);
     
     if (selectedTime && event.type !== 'dismissed') {
       onChange?.(selectedTime.toISOString());
     }
   };
+
+  // Clean up on unmount
+  React.useEffect(() => {
+    return () => {
+      setShowTimePicker(false);
+    };
+  }, []);
 
   return (
     <FormItem>
@@ -536,7 +542,7 @@ const FormTimePicker = React.forwardRef<
       </Button>
 
       {showTimePicker && (
-        <DateTimePicker
+        <RNDateTimePicker
           value={value ? new Date(value) : new Date()}
           mode={mode}
           is24Hour={is24Hour}
@@ -553,7 +559,7 @@ const FormTimePicker = React.forwardRef<
 
 FormTimePicker.displayName = 'FormTimePicker';
 
-// New FormDateTimePicker component
+// Fixed FormDateTimePicker component
 const FormDateTimePicker = React.forwardRef<
   React.ComponentRef<typeof Button>,
   FormItemProps<typeof Button, string> & {
@@ -562,7 +568,9 @@ const FormDateTimePicker = React.forwardRef<
   }
 >(({ label, description, value, onChange, is24Hour = true, display = 'default', ...props }, ref) => {
   const { error, formItemNativeID, formDescriptionNativeID, formMessageNativeID } = useFormField();
-  const [showDateTimePicker, setShowDateTimePicker] = React.useState(false);
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [showTimePicker, setShowTimePicker] = React.useState(false);
+  const [tempDate, setTempDate] = React.useState<Date | null>(null);
 
   const formatDateTime = (dateTimeString: string) => {
     if (!dateTimeString) return 'Pick date & time';
@@ -580,15 +588,43 @@ const FormDateTimePicker = React.forwardRef<
     }
   };
 
-  const handleDateTimeChange = (event: any, selectedDateTime?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDateTimePicker(false);
-    }
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
     
-    if (selectedDateTime && event.type !== 'dismissed') {
-      onChange?.(selectedDateTime.toISOString());
+    if (selectedDate && event.type !== 'dismissed') {
+      setTempDate(selectedDate);
+      // Show time picker after date is selected
+      setTimeout(() => {
+        setShowTimePicker(true);
+      }, 100); // Small delay to ensure proper cleanup
     }
   };
+
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    
+    if (selectedTime && event.type !== 'dismissed' && tempDate) {
+      // Combine date and time
+      const combinedDateTime = new Date(tempDate);
+      combinedDateTime.setHours(selectedTime.getHours());
+      combinedDateTime.setMinutes(selectedTime.getMinutes());
+      combinedDateTime.setSeconds(selectedTime.getSeconds());
+      
+      onChange?.(combinedDateTime.toISOString());
+    }
+    
+    // Clean up temp state
+    setTempDate(null);
+  };
+
+  // Clean up on unmount
+  React.useEffect(() => {
+    return () => {
+      setShowDatePicker(false);
+      setShowTimePicker(false);
+      setTempDate(null);
+    };
+  }, []);
 
   return (
     <FormItem>
@@ -605,7 +641,7 @@ const FormDateTimePicker = React.forwardRef<
             : `${formDescriptionNativeID} ${formMessageNativeID}`
         }
         aria-invalid={!!error}
-        onPress={() => setShowDateTimePicker(true)}
+        onPress={() => setShowDatePicker(true)}
         {...props}
       >
         {({ pressed }) => (
@@ -650,13 +686,23 @@ const FormDateTimePicker = React.forwardRef<
         )}
       </Button>
 
-      {showDateTimePicker && (
-        <DateTimePicker
+      {/* Render only one picker at a time */}
+      {showDatePicker && (
+        <RNDateTimePicker
           value={value ? new Date(value) : new Date()}
-          mode="datetime"
+          mode="date"
+          display={display}
+          onChange={handleDateChange}
+        />
+      )}
+
+      {showTimePicker && tempDate && (
+        <RNDateTimePicker
+          value={tempDate}
+          mode="time"
           is24Hour={is24Hour}
           display={display}
-          onChange={handleDateTimeChange}
+          onChange={handleTimeChange}
         />
       )}
       

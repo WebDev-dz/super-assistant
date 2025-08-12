@@ -7,7 +7,12 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_INSTANT_APP_ID": "17a527f7-dbc2-4bdc-be96-11b283aca80a",
+        "OPENAI_API_KEY": "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",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY":"pk_test_aHVtb3JvdXMtY291Z2FyLTUyLmNsZXJrLmFjY291bnRzLmRldiQ"
+      }
     },
     "preview": {
       "android": {

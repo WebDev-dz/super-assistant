@@ -172,9 +172,7 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  // Removed all FAB styles since we're using TailwindCSS
-});
+
 
 const useIsomorphicLayoutEffect =
   Platform.OS === "web" && typeof window === "undefined"
