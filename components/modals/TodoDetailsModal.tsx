@@ -45,6 +45,7 @@ export default function TodoDetailsModal({
   const {
     updateTask,
     deleteTask,
+    createTask,
     state: { milestones },
   } = useHandlers();
   const { ref, open, close } = useBottomSheet();
@@ -123,82 +124,12 @@ export default function TodoDetailsModal({
 
         <BottomSheetScrollView  className="gap-4">
           {/* Task Header */}
-          <Card className={isDark ? "bg-gray-800" : "bg-white"}>
-            <CardHeader className="gap-3">
-              <View className="flex-row items-center justify-between">
-                <CardTitle
-                  className={`text-lg ${isDark ? "text-white" : "text-gray-900"}`}
-                >
-                  {task.title}
-                </CardTitle>
-                <Checkbox
-                  checked={task.completed}
-                  onCheckedChange={handleToggleComplete}
-                />
-              </View>
-
-              <View className="flex-row items-center gap-4">
-                <View className="flex-row items-center gap-2">
-                  <View
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: getPriorityColor(task.priority) }}
-                  />
-                  <Text
-                    className={`text-sm capitalize ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                  >
-                    {task.priority} priority
-                  </Text>
-                </View>
-
-                <View className="flex-row items-center gap-2">
-                  <View
-                    className={`w-3 h-3 rounded-full ${task.completed ? "bg-green-500" : "bg-gray-400"}`}
-                  />
-                  <Text
-                    className={`text-sm capitalize ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                  >
-                    {task.completed ? "completed" : "pending"}
-                  </Text>
-                </View>
-              </View>
-            </CardHeader>
-
-            <CardContent className="gap-3">
-              {task.description && (
-                <Text
-                  className={`text-sm leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                >
-                  {task.description}
-                </Text>
-              )}
-
-              <View className="flex-row items-center gap-2">
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={isDark ? "#9CA3AF" : "#6B7280"}
-                />
-                <Text
-                  className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                >
-                  {task.dueDate
-                    ? `Due: ${new Date(task.dueDate).toLocaleDateString()}`
-                    : "No due date set"}
-                </Text>
-              </View>
-            </CardContent>
-          </Card>
+          
 
           {/* Additional Details */}
           <Card className={isDark ? "bg-gray-800" : "bg-white"}>
-            <CardHeader>
-              <CardTitle
-                className={`text-base ${isDark ? "text-white" : "text-gray-900"}`}
-              >
-                Additional Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="gap-3">
+           
+            <CardContent className="gap-3 mt-6">
               <TodoForm
                 form={form}
                 milestoneOptions={milestones.map((m) => ({
@@ -207,7 +138,7 @@ export default function TodoDetailsModal({
                 }))}
                 submitLabel="Save Changes"
                 onSubmit={async (values) => {
-                  await updateTask({
+                  await createTask({
                     id: task.id,
                     title: values.title,
                     description: values.description,
@@ -265,6 +196,7 @@ export default function TodoDetailsModal({
           </Card>
 
           {/* Actions */}
+          {/*                 
           <View className="flex-row gap-3 pt-4">
             <Button
               variant="outline"
@@ -296,6 +228,7 @@ export default function TodoDetailsModal({
               </Text>
             </Button>
           </View>
+          */}
         </BottomSheetScrollView>
       </BottomSheetContent>
     </BottomSheet>

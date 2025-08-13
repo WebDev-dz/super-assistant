@@ -13,6 +13,7 @@ import { TasksActions, tasksActions } from '@/lib/actions/tasks';
 import { EventsActions, eventsActions } from '@/lib/actions/events';
 import { NotificationsActions, notificationsActions } from '@/lib/actions/notifications';
 import { AppSchema } from '@/instant.schema';
+import expoCalendar, { useCalendarPermissions } from 'expo-calendar';
 
 // InstantDB-backed data provider. Requires NEXT_PUBLIC_INSTANT_APP_ID to be set.
 type  Ctx = GoalsActions & MilestonesActions & TasksActions & EventsActions & NotificationsActions & {
@@ -42,6 +43,10 @@ function computeMilestoneProgress(tasks: Task[], milestoneId: string, msComplete
 }
 
 export function InstantDataProvider({ children, ownerId }: { children: React.ReactNode; ownerId: string }) {
+
+  const [permission, requestCalendarPermission] = useCalendarPermissions();
+  const [calendar, setCalendar] = React.useState<expoCalendar.Calendar | null>(null);
+ 
   if (!db) {
     throw new Error('InstantDB not configured. Add NEXT_PUBLIC_INSTANT_APP_ID.');
   }
@@ -63,6 +68,25 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
   const tasks: Task[] = React.useMemo(() => (data?.tasks ?? []) as any, [data]);
   const notifications: Notification[] = React.useMemo(() => (data?.notifications ?? []) as any, [data]);
   const calendarEvents: CalendarEvent[] = React.useMemo(() => (data?.calendarEvents ?? []) as any, [data]);
+
+
+  React.useEffect(() => {
+    if (permission && permission?.status !== 'granted') {
+      requestCalendarPermission();
+    } else if (permission?.status === 'denied') {
+      console.warn('Calendar permission denied. Some features may not work.');
+    }
+  }, [permission, requestCalendarPermission]);
+
+  React.useEffect(() => {
+    if (permission?.status === 'granted') {
+      // Fetch or create default calendar
+      expoCalendar.getDefaultCalendarAsync().then((cal) => {
+
+        console.log('Default calendar:', cal);
+      setCalendar(cal); 
+      
+    })}}, [permission, ownerId]);
 
   // Derived goal progress
   const milestoneProgress = (milestoneId: string) => {

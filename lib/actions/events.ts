@@ -24,6 +24,7 @@ const createEvent = async (event: Required<UpdateParams<AppSchema, "calendarEven
     const response = await expoCalendar.createEventAsync(event.calendarId, {
         ...data,
         startDate: new Date(data.startDate),
+        
         endDate: new Date(data.endDate),
     })
     
