@@ -13,7 +13,7 @@ import { TasksActions, tasksActions } from '@/lib/actions/tasks';
 import { EventsActions, eventsActions } from '@/lib/actions/events';
 import { NotificationsActions, notificationsActions } from '@/lib/actions/notifications';
 import { AppSchema } from '@/instant.schema';
-import expoCalendar, { useCalendarPermissions } from 'expo-calendar';
+import * as Calendar from 'expo-calendar';
 
 // InstantDB-backed data provider. Requires NEXT_PUBLIC_INSTANT_APP_ID to be set.
 type  Ctx = GoalsActions & MilestonesActions & TasksActions & EventsActions & NotificationsActions & {
@@ -44,8 +44,27 @@ function computeMilestoneProgress(tasks: Task[], milestoneId: string, msComplete
 
 export function InstantDataProvider({ children, ownerId }: { children: React.ReactNode; ownerId: string }) {
 
-  const [permission, requestCalendarPermission] = useCalendarPermissions();
-  const [calendar, setCalendar] = React.useState<expoCalendar.Calendar | null>(null);
+  const [calendar, setCalendar] = React.useState<Calendar.Calendar | null>(null);
+  const [calendarPermission, setCalendarPermission] = React.useState<Calendar.PermissionStatus | null>(null);
+
+  // Initialize calendar permissions
+  React.useEffect(() => {
+    const initializeCalendarPermissions = async () => {
+      try {
+        const { status } = await Calendar.requestCalendarPermissionsAsync();
+        setCalendarPermission(status);
+
+        if (status === Calendar.PermissionStatus.GRANTED) {
+          // const defaultCalendar = await Calendar.getCalendarsAsync();
+          // setCalendar(defaultCalendar);
+        }
+      } catch (error) {
+        console.error('Error initializing calendar:', error);
+      }
+    };
+
+    initializeCalendarPermissions();
+  }, []);
  
   if (!db) {
     throw new Error('InstantDB not configured. Add NEXT_PUBLIC_INSTANT_APP_ID.');
@@ -70,23 +89,7 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
   const calendarEvents: CalendarEvent[] = React.useMemo(() => (data?.calendarEvents ?? []) as any, [data]);
 
 
-  React.useEffect(() => {
-    if (permission && permission?.status !== 'granted') {
-      requestCalendarPermission();
-    } else if (permission?.status === 'denied') {
-      console.warn('Calendar permission denied. Some features may not work.');
-    }
-  }, [permission, requestCalendarPermission]);
-
-  React.useEffect(() => {
-    if (permission?.status === 'granted') {
-      // Fetch or create default calendar
-      expoCalendar.getDefaultCalendarAsync().then((cal) => {
-
-        console.log('Default calendar:', cal);
-      setCalendar(cal); 
-      
-    })}}, [permission, ownerId]);
+  // Calendar initialization is now handled in the initialization effect above
 
   // Derived goal progress
   const milestoneProgress = (milestoneId: string) => {
@@ -234,11 +237,11 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
   const createTask:  Ctx['createTask'] = async (task) => {
     try {
       const result = await tasksActions.createTask(task);
-      const handlers = await tasksHandlers.handleCreateTask(task);
+      const handlers = await tasksHandlers.handleCreateTask(task as any);
       handlers.success();
       return result;
     } catch (error) {
-      const handlers = await tasksHandlers.handleCreateTask(task);
+      const handlers = await tasksHandlers.handleCreateTask(task as any);
       handlers.error(error);
       throw error;
     }

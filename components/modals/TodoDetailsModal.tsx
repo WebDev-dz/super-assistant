@@ -8,8 +8,10 @@ import {
   BottomSheet,
   BottomSheetCloseTrigger,
   BottomSheetContent,
+  BottomSheetFooter,
   BottomSheetHeader,
   BottomSheetView,
+  BottomSheetScrollView,
   useBottomSheet,
 } from "~/components/deprecated-ui/bottom-sheet";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -19,18 +21,24 @@ import type { Task } from "@/lib/types";
 import TodoForm from "../forms/TodoForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { CreateTaskSchema } from "@/lib/validations";
 import { defaultTask } from "@/lib/constants";
 import { safeParse } from "zod";
 import { getPriorityColor } from "@/lib/utils";
+import { id, UpdateParams } from "@instantdb/react-native";
+import { AppSchema } from "@/instant.schema";
+import { useSharedValue } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface TodoDetailsModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (task: Task) => Promise<void>;
+  onEdit?: (task: Task) => Promise<void>;
+  onCreate?: (task: Task) => Promise<void>;
+  mode: 'create' | 'update';
   milestoneMap: Record<string, string>;
+  milestoneId?: string; // Required when creating a new task for a specific milestone
 }
 
 export default function TodoDetailsModal({
@@ -38,7 +46,10 @@ export default function TodoDetailsModal({
   isOpen,
   onClose,
   onEdit,
+  onCreate,
+  mode,
   milestoneMap,
+  milestoneId
 }: TodoDetailsModalProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -49,7 +60,9 @@ export default function TodoDetailsModal({
     state: { milestones },
   } = useHandlers();
   const { ref, open, close } = useBottomSheet();
+  const insets = useSafeAreaInsets();
 
+  const animatedFooterPosition = useSharedValue(0); // Initialize shared value for footer position
   const form = useForm({
     // @ts-ignore
     resolver: zodResolver(CreateTaskSchema),
@@ -66,11 +79,8 @@ export default function TodoDetailsModal({
   }, [isOpen, task, open, close]);
 
   useEffect(() => {
-    console.log({...safeParse(CreateTaskSchema, task)});
+    console.log({ ...safeParse(CreateTaskSchema, task) });
   }, [task]);
-
-  
-  
 
   const handleToggleComplete = async () => {
     try {
@@ -83,7 +93,7 @@ export default function TodoDetailsModal({
       Alert.alert("Error", "Failed to update task");
     }
   };
-  
+
   const handleDelete = () => {
     Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
       { text: "Cancel", style: "cancel" },
@@ -102,33 +112,84 @@ export default function TodoDetailsModal({
     ]);
   };
 
- 
-  
+  const handleSubmit = async (values: Task) => {
+    try {
+      if (mode === 'create') {
+        const taskData = {
+          ...values,
+          id: id(),
+          dueDate: new Date(values.dueDate || ""),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          completed: false,
+          hasAlarm: false,
+          milestoneId: milestoneId || '',
+        };
+
+        const result = await createTask(taskData);
+        if (result) {
+          onCreate?.(result);
+          onClose();
+        }
+      } else if (task) {
+        const updatedData = {
+          ...values,
+          id: task.id,
+          updatedAt: new Date().toISOString(),
+        };
+
+        await updateTask(updatedData as UpdateParams<AppSchema, "tasks">);
+        await onEdit?.(task);
+        onClose();
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        mode === 'create' ? 'Failed to create task' : 'Failed to update task'
+      );
+    }
+  };
+
   if (!task) return null;
+
+
+  const renderFooter = () => {
+    return (<View
+
+      style={{ paddingBottom: insets.bottom }}
+
+      className="px-4 pt-1.5"
+    >
+      <Button onPress={() => handleSubmit(form.getValues())} className="w-full">
+        <Text className={buttonTextVariants({ variant: "default" })}>
+          {mode === 'create' ? 'Create Task' : 'Update Task'}
+        </Text>
+      </Button>
+    </View>)
+  }
+
   return (
     <BottomSheet>
       <BottomSheetContent
         ref={ref}
-        snapPoints={["60%", "90%"]}
+        snapPoints={["70%"]}
         enablePanDownToClose={true}
         onDismiss={onClose}
+        // enableDynamicSizing={true}
+        footerComponent={renderFooter}
+
       >
         <BottomSheetHeader>
           <Text
             className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
           >
-            Task Details
+            {mode === 'create' ? 'Create Task' : 'Task Details'}
           </Text>
           <BottomSheetCloseTrigger />
         </BottomSheetHeader>
 
-        <BottomSheetScrollView  className="gap-4">
-          {/* Task Header */}
-          
-
-          {/* Additional Details */}
+        <BottomSheetView className="gap-4 flex-1">
           <Card className={isDark ? "bg-gray-800" : "bg-white"}>
-           
             <CardContent className="gap-3 mt-6">
               <TodoForm
                 form={form}
@@ -137,17 +198,7 @@ export default function TodoDetailsModal({
                   label: m.title,
                 }))}
                 submitLabel="Save Changes"
-                onSubmit={async (values) => {
-                  await createTask({
-                    id: task.id,
-                    title: values.title,
-                    description: values.description,
-                    priority: values.priority as any,
-                    milestoneId: (values.milestoneId ?? "") as any,
-                    updatedAt: Date.now(),
-                  });
-                  // setEditOpen(false);
-                }}
+                onSubmit={handleSubmit}
               />
 
               {task.milestoneId && (
@@ -164,72 +215,11 @@ export default function TodoDetailsModal({
                   </Text>
                 </View>
               )}
-
-              <View className="flex-row items-center gap-2">
-                <Ionicons
-                  name="time-outline"
-                  size={16}
-                  color={isDark ? "#9CA3AF" : "#6B7280"}
-                />
-                <Text
-                  className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                >
-                  Created: {new Date(task.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-
-              {task.updatedAt && task.updatedAt !== task.createdAt && (
-                <View className="flex-row items-center gap-2">
-                  <Ionicons
-                    name="refresh-outline"
-                    size={16}
-                    color={isDark ? "#9CA3AF" : "#6B7280"}
-                  />
-                  <Text
-                    className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
-                  >
-                    Updated: {new Date(task.updatedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-              )}
             </CardContent>
           </Card>
 
-          {/* Actions */}
-          {/*                 
-          <View className="flex-row gap-3 pt-4">
-            <Button
-              variant="outline"
-              onPress={() => onEdit(task).then(() => onClose())}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: "outline" })}>
-                Edit
-              </Text>
-            </Button>
+        </BottomSheetView>
 
-            <Button
-              variant="outline"
-              onPress={handleToggleComplete}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: "outline" })}>
-                {task.completed ? "Mark Incomplete" : "Mark Complete"}
-              </Text>
-            </Button>
-
-            <Button
-              variant="destructive"
-              onPress={handleDelete}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: "destructive" })}>
-                Delete
-              </Text>
-            </Button>
-          </View>
-          */}
-        </BottomSheetScrollView>
       </BottomSheetContent>
     </BottomSheet>
   );

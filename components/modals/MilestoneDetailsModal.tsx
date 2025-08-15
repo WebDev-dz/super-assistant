@@ -15,22 +15,33 @@ interface MilestoneDetailsModalProps {
   milestone: Milestone | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (milestone: Milestone) => void;
+  onEdit?: (milestone: Milestone) => void;
+  onCreate?: (milestone: Milestone) => void;
+  mode: 'create' | 'update';
+  goalId?: string; // Required when creating a new milestone
 }
 
-export default function MilestoneDetailsModal({ milestone, isOpen, onClose, onEdit }: MilestoneDetailsModalProps) {
+export default function MilestoneDetailsModal({ 
+  milestone, 
+  isOpen, 
+  onClose, 
+  onEdit, 
+  onCreate,
+  mode,
+  goalId 
+}: MilestoneDetailsModalProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { updateMilestone, deleteMilestone } = useHandlers();
+  const { updateMilestone, deleteMilestone, createMilestone } = useHandlers();
   const { ref, open, close } = useBottomSheet();
 
   React.useEffect(() => {
-    if (isOpen && milestone) {
+    if (isOpen && (mode === 'create' || milestone)) {
       open();
     } else {
       close();
     }
-  }, [isOpen, milestone, open, close]);
+  }, [isOpen, milestone, mode, open, close]);
 
   if (!milestone) return null;
 
@@ -47,6 +58,8 @@ export default function MilestoneDetailsModal({ milestone, isOpen, onClose, onEd
   };
 
   const handleDelete = () => {
+    if (mode !== 'update' || !milestone) return;
+    
     Alert.alert('Delete Milestone', 'Are you sure you want to delete this milestone?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -179,7 +192,7 @@ export default function MilestoneDetailsModal({ milestone, isOpen, onClose, onEd
           <View className="flex-row gap-3 pt-4">
             <Button 
               variant="outline" 
-              onPress={() => onEdit(milestone)}
+              onPress={() => onEdit?.(milestone)}
               className="flex-1"
             >
               <Text className={buttonTextVariants({ variant: 'outline' })}>Edit</Text>

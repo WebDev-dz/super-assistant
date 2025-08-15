@@ -6,12 +6,8 @@ import {
   Text,
   Pressable,
 } from "react-native";
-
-// Status and Priority schemas
-const StatusSchema = z.enum(['not_started', 'in_progress', 'completed', 'on_hold', 'cancelled']);
-const PrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
-
-
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 
 type Goal = z.infer<typeof GoalSchema>;
 
@@ -108,30 +104,6 @@ const isOverdue = (targetEndDate: string, status: Goal['status']) => {
   return new Date(targetEndDate) < new Date();
 };
 
-// Progress Bar Component
-const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
-  <View className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-    <View 
-      className="h-full bg-green-500 dark:bg-green-400 rounded-full"
-      style={{ width: `${progress}%` }}
-    />
-  </View>
-);
-
-// Badge Component
-const Badge: React.FC<{ 
-  text: string; 
-  bgStyle: string;
-  textStyle: string;
-  small?: boolean;
-}> = ({ text, bgStyle, textStyle, small = false }) => (
-  <View className={`px-2 py-1 rounded-full ${bgStyle} ${small ? 'px-1.5 py-0.5' : ''}`}>
-    <Text className={`font-medium ${textStyle} ${small ? 'text-xs' : 'text-sm'}`}>
-      {text.replace('_', ' ').toUpperCase()}
-    </Text>
-  </View>
-);
-
 export default function GoalCard({
   goal,
   onPress,
@@ -159,68 +131,53 @@ export default function GoalCard({
       onPress={() => onPress(goal)}
       onLongPress={() => onLongPress?.(goal)}
     >
-      {/* Header */}
-      <View className="flex-row justify-between items-start mb-3">
-        <View className="flex-1 mr-3">
-          <Text 
-            className="text-lg font-semibold text-gray-900 dark:text-white mb-1" 
-            numberOfLines={2}
-          >
-            {goal.title}
+      {/* Title */}
+      <View className="mb-3">
+        <Text 
+          className="text-lg font-semibold text-gray-900 dark:text-white mb-1" 
+          numberOfLines={2}
+        >
+          {goal.title}
+        </Text>
+        {goal.category && !compact && (
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            {goal.category}
           </Text>
-          {goal.category && !compact && (
-            <Text className="text-sm text-gray-500 dark:text-gray-400">
-              {goal.category}
-            </Text>
-          )}
-        </View>
-        <View className="space-y-2">
-          <Badge 
-            text={goal.status} 
-            bgStyle={getStatusStyle(goal.status)}
-            textStyle={getStatusTextStyle(goal.status)}
-            small 
-          />
-          <Badge 
-            text={goal.priority} 
-            bgStyle={getPriorityStyle(goal.priority)}
-            textStyle={getPriorityTextStyle(goal.priority)}
-            small 
-          />
-        </View>
+        )}
+      </View>
+
+      {/* Status and Priority Badges */}
+      <View className="flex-row space-x-2 mb-3">
+        <Badge className={getStatusStyle(goal.status)}>
+          <Text className={`text-xs font-medium ${getStatusTextStyle(goal.status)}`}>
+            {goal.status.replace('_', ' ')}
+          </Text>
+        </Badge>
+        <Badge className={getPriorityStyle(goal.priority)}>
+          <Text className={`text-xs font-medium ${getPriorityTextStyle(goal.priority)}`}>
+            {goal.priority}
+          </Text>
+        </Badge>
       </View>
 
       {/* Description */}
       {goal.description && !compact && (
         <Text 
           className="text-sm text-gray-600 dark:text-gray-300 mb-3" 
-          numberOfLines={2}
+          numberOfLines={3}
         >
           {goal.description}
         </Text>
       )}
 
-      {/* Progress */}
-      <View className="mb-3">
-        <View className="flex-row justify-between items-center mb-1">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
-            Progress
-          </Text>
-          <Text className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            {goal.overallProgress}%
-          </Text>
-        </View>
-        <ProgressBar progress={goal.overallProgress} />
-      </View>
-
       {/* Date Info */}
       <View className="space-y-1 mb-3">
         <View className="flex-row items-center">
-          <Text className="text-xs text-gray-500 dark:text-gray-400">
+          <Text className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Due: {formatDate(goal.targetEndDate)}
           </Text>
           {overdue && goal.status !== 'completed' && (
-            <View className="ml-2 px-1.5 py-0.5 bg-red-100 dark:bg-red-900 rounded">
+            <View className="ml-2 px-2 py-0.5 bg-red-100 dark:bg-red-900 rounded">
               <Text className="text-xs font-medium text-red-600 dark:text-red-400">
                 OVERDUE
               </Text>
@@ -236,16 +193,26 @@ export default function GoalCard({
 
       {/* Resources */}
       {!compact && (goal.budget || goal.estimatedTotalHours) && (
-        <View className="flex-row space-x-4 py-2 mb-3 border-t border-gray-200 dark:border-gray-700">
+        <View className="flex-row space-x-4 py-2 mb-3 border-t border-gray-100 dark:border-gray-700">
           {goal.budget && (
-            <Text className="text-xs text-gray-500 dark:text-gray-400">
-              Budget: ${goal.budget.toLocaleString()}
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-xs font-medium text-gray-600 dark:text-gray-400 mr-1">
+                Budget:
+              </Text>
+              <Text className="text-xs text-gray-800 dark:text-gray-300">
+                ${goal.budget.toLocaleString()}
+              </Text>
+            </View>
           )}
           {goal.estimatedTotalHours && (
-            <Text className="text-xs text-gray-500 dark:text-gray-400">
-              Est: {goal.estimatedTotalHours}h
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-xs font-medium text-gray-600 dark:text-gray-400 mr-1">
+                Est:
+              </Text>
+              <Text className="text-xs text-gray-800 dark:text-gray-300">
+                {goal.estimatedTotalHours}h
+              </Text>
+            </View>
           )}
         </View>
       )}
@@ -253,20 +220,20 @@ export default function GoalCard({
       {/* Tags */}
       {!compact && goal.tags && goal.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-1 mb-3">
-          {goal.tags.slice(0, 3).map((tag, index) => (
+          {goal.tags.slice(0, 4).map((tag, index) => (
             <View 
               key={index} 
               className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full"
             >
               <Text className="text-xs text-gray-600 dark:text-gray-300">
-                {tag}
+                #{tag}
               </Text>
             </View>
           ))}
-          {goal.tags.length > 3 && (
+          {goal.tags.length > 4 && (
             <View className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
               <Text className="text-xs text-gray-600 dark:text-gray-300">
-                +{goal.tags.length - 3}
+                +{goal.tags.length - 4}
               </Text>
             </View>
           )}
@@ -275,7 +242,7 @@ export default function GoalCard({
 
       {/* Actions */}
       {showActions && (
-        <View className="flex-row justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+        <View className="flex-row justify-end gap-3 items-center pt-3 border-t border-gray-100 dark:border-gray-700">
           <View className="flex-row space-x-2">
             {onEdit && (
               <Pressable
@@ -285,7 +252,7 @@ export default function GoalCard({
                   onEdit(goal);
                 }}
               >
-                <Text className="text-sm text-gray-700 dark:text-gray-300">
+                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Edit
                 </Text>
               </Pressable>
@@ -293,13 +260,13 @@ export default function GoalCard({
             
             {goal.status !== 'completed' && onComplete && (
               <Pressable
-                className="px-3 py-1.5 bg-green-100 dark:bg-green-900 rounded-lg active:opacity-70 flex-row items-center"
+                className="px-3 py-1.5 bg-green-100 dark:bg-green-900 rounded-lg active:opacity-70"
                 onPress={(e) => {
                   e.stopPropagation();
                   onComplete(goal);
                 }}
               >
-                <Text className="text-sm text-green-600 dark:text-green-400">
+                <Text className="text-sm font-medium text-green-600 dark:text-green-400">
                   Complete
                 </Text>
               </Pressable>
@@ -322,14 +289,14 @@ export default function GoalCard({
             )}
             
             {onDelete && (
-              <Pressable
-                className="px-3 py-1.5 rounded-lg active:opacity-70"
+               <Pressable
+                className="px-3 py-1.5 bg-red-100 dark:bg-green-900 rounded-lg active:opacity-70"
                 onPress={(e) => {
                   e.stopPropagation();
                   onDelete(goal);
                 }}
               >
-                <Text className="text-sm text-red-600 dark:text-red-400">
+                <Text className="text-sm font-medium text-red-600 dark:text-red-400">
                   Delete
                 </Text>
               </Pressable>

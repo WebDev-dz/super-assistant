@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, StyleSheet } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { Button, buttonTextVariants } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
@@ -10,20 +10,131 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { useHandlers } from '@/hooks/data-provider';
 import { Ionicons } from '@expo/vector-icons';
 import type { Goal } from '@/lib/types';
-import { getPriorityColor, getStatusColor } from '@/lib/utils';
+import { cn, getPriorityColor, getStatusColor } from '@/lib/utils';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFormFlow } from '@/hooks/useFormFlow';
+import z from 'zod';
+import { GoalSchema, PrioritySchema, StatusSchema } from '@/lib/validations';
+import { id, UpdateParams } from '@instantdb/react-native';
+import { AppSchema } from '@/instant.schema';
+import GoalFormComponent from '../forms/GoalForm';
 
 interface GoalDetailsModalProps {
   goal: Goal | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (goal: Goal) => void;
+  onEdit?: (goal: Goal) => void;
+  onCreate?: (goal: Goal) => void;
+  mode: 'create' | 'update';
 }
 
-export default function GoalDetailsModal({ goal, isOpen, onClose, onEdit }: GoalDetailsModalProps) {
+
+// Step-specific schemas
+const stepSchemas = [
+  z.object({
+    title: z.string().min(3, { message: 'Goal title is required.' }),
+    description: z.string().optional(),
+  }),
+  z.object({
+    status: StatusSchema,
+    priority: PrioritySchema,
+    category: z.string().optional(),
+  }),
+  z.object({
+    startDate: z.coerce.string(),
+    targetEndDate: z.coerce.string(),
+  }),
+  z.object({
+    budget: z.number().min(0).optional(),
+    estimatedTotalHours: z.number().min(0).optional(),
+  })
+];
+
+// Full schema
+const fullSchema = GoalSchema
+
+export default function GoalDetailsModal({ 
+  goal, 
+  isOpen, 
+  onClose, 
+  onEdit, 
+  onCreate,
+  mode 
+}: GoalDetailsModalProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { updateGoal, deleteGoal } = useHandlers();
+  const { updateGoal, deleteGoal, createGoal } = useHandlers();
   const { ref, open, close } = useBottomSheet();
+  const insets = useSafeAreaInsets();
+
+  const defaultValues = mode === 'create' ? {
+    priority: 'low',
+    title: "",
+    startDate: new Date().toISOString(),
+    targetEndDate: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    overallProgress: 0,
+    owner: '',
+    status: 'not_started',
+    description: '',
+    tags: [],
+    category: ''
+  } : {
+    ...goal,
+    startDate: goal?.startDate || new Date().toISOString(),
+    targetEndDate: goal?.targetEndDate || new Date().toISOString()
+  };
+  const formFlow = useFormFlow({
+    stepSchemas,
+    scrollEnabled: false,
+    fullSchema,
+    
+    // @ts-ignore
+    defaultValues,
+    onSubmit: async (data) => {
+      try {
+        if (mode === 'create') {
+          const goalData = {
+            ...data,
+            id: id(),
+            createdAt: new Date().toISOString(),
+            overallProgress: 0,
+            tags: data.tags || [],
+            category: data.category || '',
+          };
+
+          const result = await createGoal(goalData as Required<UpdateParams<AppSchema, "goals">>);
+          onCreate?.(result);
+          onClose();
+        } else {
+          const goalData = {
+            ...data,
+            id: goal!.id,
+            updatedAt: new Date().toISOString()
+          };
+
+          await updateGoal(goalData);
+          onEdit?.(goalData);
+          onClose();
+        }
+      } catch (error) {
+        Alert.alert(
+          'Error',
+          mode === 'create' ? 'Failed to create goal' : 'Failed to update goal'
+        );
+      }
+    }
+
+
+
+  });
+  
+  const contentInsets = {
+    top: insets.top,
+    bottom: insets.bottom,
+    left: 12,
+    right: 12,
+  };
 
   React.useEffect(() => {
     if (isOpen && goal) {
@@ -37,10 +148,10 @@ export default function GoalDetailsModal({ goal, isOpen, onClose, onEdit }: Goal
 
   const handleToggleComplete = async () => {
     try {
-      await updateGoal({ 
-        id: goal.id, 
-        status: goal.status === 'completed' ? 'in_progress' : 'completed', 
-        updatedAt: new Date().toISOString() 
+      await updateGoal({
+        id: goal.id,
+        status: goal.status === 'completed' ? 'in_progress' : 'completed',
+        updatedAt: new Date().toISOString()
       });
     } catch {
       Alert.alert('Error', 'Failed to update goal');
@@ -48,6 +159,8 @@ export default function GoalDetailsModal({ goal, isOpen, onClose, onEdit }: Goal
   };
 
   const handleDelete = () => {
+    if (mode !== 'update' || !goal) return;
+
     Alert.alert('Delete Goal', 'Are you sure you want to delete this goal?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -65,15 +178,15 @@ export default function GoalDetailsModal({ goal, isOpen, onClose, onEdit }: Goal
     ]);
   };
 
- 
 
-  
+
+
 
   return (
     <BottomSheet>
-      <BottomSheetContent 
+      <BottomSheetContent
         ref={ref}
-        snapPoints={['60%', '90%']} 
+        snapPoints={['60%', '90%']}
         enablePanDownToClose={true}
         onDismiss={onClose}
       >
@@ -83,130 +196,69 @@ export default function GoalDetailsModal({ goal, isOpen, onClose, onEdit }: Goal
           </Text>
           <BottomSheetCloseTrigger />
         </BottomSheetHeader>
-        
+
         <BottomSheetView hadHeader className="gap-4">
-          {/* Goal Header */}
-          <Card className={isDark ? 'bg-gray-800' : 'bg-white'}>
-            <CardHeader className="gap-3">
-              <View className="flex-row items-center justify-between">
-                <CardTitle className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {goal.title}
-                </CardTitle>
-                <Checkbox 
-                  checked={goal.status === 'completed'} 
-                  onCheckedChange={handleToggleComplete} 
-                />
-              </View>
-              
-              <View className="flex-row items-center gap-4">
-                <View className="flex-row items-center gap-2">
-                  <View 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: getPriorityColor(goal.priority) }}
-                  />
-                  <Text className={`text-sm capitalize ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {goal.priority} priority
-                  </Text>
-                </View>
-                
-                <View className="flex-row items-center gap-2">
-                  <View 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: getStatusColor(goal.status) }}
-                  />
-                  <Text className={`text-sm capitalize ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {goal.status.replace('_', ' ')}
-                  </Text>
-                </View>
-              </View>
-            </CardHeader>
-            
-            <CardContent className="gap-3">
-              {goal.description && (
-                <Text className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {goal.description}
-                </Text>
-              )}
-              
-              <View className="flex-row items-center gap-2">
-                <Ionicons name="calendar-outline" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                <Text className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  {goal.startDate && goal.targetEndDate 
-                    ? `${new Date(goal.startDate).toLocaleDateString()} - ${new Date(goal.targetEndDate).toLocaleDateString()}`
-                    : 'No dates set'
-                  }
-                </Text>
-              </View>
-            </CardContent>
-          </Card>
 
-          {/* Additional Details */}
-          <Card className={isDark ? 'bg-gray-800' : 'bg-white'}>
-            <CardHeader>
-              <CardTitle className={`text-base ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                Additional Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="gap-3">
-              {goal.category && (
-                <View className="flex-row items-center gap-2">
-                  <Ionicons name="folder-outline" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                  <Text className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Category: {goal.category}
-                  </Text>
-                </View>
+          <GoalFormComponent formFlow={formFlow} />
+          {/* Navigation Buttons */}
+          <View className={cn("flex-row justify-end gap-4 pt-4 px-10", {})} style={[{ paddingBottom: contentInsets.bottom }]}>
+            <View style={styles.navigationButtons}>
+              {formFlow.currentStep > 0 && (
+                <Button variant="ghost" onPress={formFlow.goToPreviousStep}>
+                  <Text className={buttonTextVariants({ variant: "ghost" })}>Previous</Text>
+                </Button>
               )}
-              
-              {goal.budget && (
-                <View className="flex-row items-center gap-2">
-                  <Ionicons name="cash-outline" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                  <Text className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Budget: ${goal.budget}
-                  </Text>
-                </View>
-              )}
-              
-              {goal.estimatedTotalHours && (
-                <View className="flex-row items-center gap-2">
-                  <Ionicons name="time-outline" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                  <Text className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Estimated Hours: {goal.estimatedTotalHours}h
-                  </Text>
-                </View>
-              )}
-            </CardContent>
-          </Card>
+              {formFlow.currentStep < formFlow.totalSteps - 1 ? (
+                <Button onPress={() => {
+                  const names = Object.keys(stepSchemas[formFlow.currentStep].shape);
+                  formFlow.form.trigger(names);
+                  const validation = stepSchemas[formFlow.currentStep].safeParse(formFlow.form.getValues());
 
-          {/* Actions */}
-          <View className="flex-row gap-3 pt-4">
-            <Button 
-              variant="outline" 
-              onPress={() => onEdit(goal)}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: 'outline' })}>Edit</Text>
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onPress={handleToggleComplete}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: 'outline' })}>
-                {goal.status === 'completed' ? 'Mark Incomplete' : 'Mark Complete'}
-              </Text>
-            </Button>
-            
-            <Button 
-              variant="destructive" 
-              onPress={handleDelete}
-              className="flex-1"
-            >
-              <Text className={buttonTextVariants({ variant: 'destructive' })}>Delete</Text>
-            </Button>
+                  validation.data ? formFlow.goToNextStep() : Alert.alert('Error', 'Please fill out all required fields.' + validation.error);
+                }}>
+                  <Text className={buttonTextVariants({ variant: "default" })}>Next</Text>
+                </Button>
+              ) : (
+                <Button onPress={formFlow.onSubmit}>
+                  <Text className={buttonTextVariants()}>Submit</Text>
+                </Button>
+              )}
+            </View>
+
           </View>
         </BottomSheetView>
       </BottomSheetContent>
     </BottomSheet>
   );
 }
+// ===================================================== Component End ==================================================== 
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  pagerView: {
+    // flex: 1,
+    minHeight: 500,
+  },
+  formSection: {
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    flexGrow: 1,
+    minHeight: 200,
+  },
+  buttonContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 16,
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  secondaryButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+});

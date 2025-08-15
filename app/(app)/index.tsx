@@ -15,6 +15,8 @@ import { defaultGoal, defaultMilestone, defaultTask } from '@/lib/constants';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { OptionButtonProps } from '@/components/ui/option-button';
 import TodoDetailsModal from '@/components/modals/TodoDetailsModal';
+import TodoCard from '@/components/cards/TodoCard';
+import { Progress } from '@/components/ui/progress';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -80,7 +82,7 @@ export default function HomeScreen() {
       role: currentUserRole,
       onPress: async (optionKey) => {
         // @ts-ignore
-        openGoalDetails(defaultGoal);
+        openGoalDetails({goal: defaultGoal, mode: 'create'});
       }
     },
     {
@@ -92,7 +94,7 @@ export default function HomeScreen() {
       isDark,
       onPress: async (optionKey) => {
         // @ts-ignore
-        openMilestoneDetails(defaultMilestone);
+        openMilestoneDetails({milestone: defaultMilestone, mode: 'create'});
       }
     },
     {
@@ -104,7 +106,7 @@ export default function HomeScreen() {
       subtitle: "Task to complete",
       onPress: async (optionKey) => {
         // @ts-ignore
-        openTodoDetails(defaultTask);
+        openTodoDetails({task: defaultTask, mode: 'create'});
       }
     },
     {
@@ -196,17 +198,32 @@ export default function HomeScreen() {
     // Additional tracking or analytics can be added here
   }, []);
 
-  const ProgressBar = ({ progress, color }: { progress: number; color: string }) => (
-    <View className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-      <View 
-        className="h-full rounded-full"
-        style={{ 
-          width: `${progress}%`,
-          backgroundColor: color
-        }}
+  const renderGoalItem = ({ item }: { item: any }) => (
+    <View className="w-80 mr-4">
+      <GoalCard
+        goal={item}
+        onPress={() => openGoalDetails(item)}
+        onDelete={handleDelete}
+        onComplete={handleComplete}
+        compact={true}
       />
     </View>
   );
+
+  const renderTaskItem = ({ item }: { item: any }) => (
+    <View className="w-72 mr-4">
+      <TodoCard
+        task={item}
+        milestoneMap={milestoneMap}
+        onToggleComplete={() => {}}
+        onDelete={() => {}}
+        onPress={() => openTodoDetails(item)}
+        isDark={isDark}
+      />
+    </View>
+  );
+
+  
 
   const StatCard = ({ title, value, subtitle, progress, color, onPress }: any) => (
     <Pressable onPress={onPress}>
@@ -221,7 +238,7 @@ export default function HomeScreen() {
           
           {progress !== undefined && (
             <View className="mb-4">
-              <ProgressBar progress={progress} color={color} />
+              <Progress value={progress} indicatorClassName={isDark ? 'bg-blue-400' : 'bg-blue-600'} />
               <Text className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {progress.toFixed(0)}% Complete
               </Text>
@@ -309,19 +326,55 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Recent Goals Section Header */}
+      {/* Recent Goals Section */}
       {goals.length > 0 && (
-        <View className="px-6 mb-4">
-          <View className="flex-row items-center justify-between">
-            <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Recent Goals
-            </Text>
-            <Pressable onPress={() => router.push('/goals/' as RelativePathString)}>
-              <Text className={`text-sm font-medium ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                View All
+        <View className="mb-6">
+          <View className="px-6 mb-4">
+            <View className="flex-row items-center justify-between">
+              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Recent Goals
               </Text>
-            </Pressable>
+              <Pressable onPress={() => router.push('/goals/' as RelativePathString)}>
+                <Text className={`text-sm font-medium ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  View All
+                </Text>
+              </Pressable>
+            </View>
           </View>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={goals.slice(0, 5)}
+            keyExtractor={(item) => item.id}
+            renderItem={renderGoalItem}
+            contentContainerStyle={{ paddingHorizontal: 24 }}
+          />
+        </View>
+      )}
+
+      {/* Recent Tasks Section */}
+      {tasks.length > 0 && (
+        <View className="mb-6">
+          <View className="px-6 mb-4">
+            <View className="flex-row items-center justify-between">
+              <Text className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Recent Tasks
+              </Text>
+              <Pressable onPress={() => router.push('/todos/' as RelativePathString)}>
+                <Text className={`text-sm font-medium ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  View All
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={tasks.slice(0, 5)}
+            keyExtractor={(item) => item.id}
+            renderItem={renderTaskItem}
+            contentContainerStyle={{ paddingHorizontal: 24 }}
+          />
         </View>
       )}
     </View>
@@ -358,7 +411,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className={`flex-1 ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
       <FlatList
-        data={goals.slice(0, 3)} // Show only first 3 goals on home screen
+        data={[{ id: 'header' }]} // Just one item for the header
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={renderHeader}
@@ -386,25 +439,12 @@ export default function HomeScreen() {
             </Text>
           </View>
         )}
-        renderItem={({ item }) => (
-          <View className="px-6 mb-3">
-            <GoalCard
-              goal={item as any}
-              onPress={() => openGoalDetails(item as any)}
-              onEdit={() => {
-                console.log('Edit goal:', item);
-              }}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-            />
-          </View>
-        )}
+        renderItem={() => null}
       />
       
       {/* Goal Details Modal */}
       <GoalDetailsModal
-        goal={modalState.goalDetails.goal}
-        isOpen={modalState.goalDetails.isOpen}
+        {...modalState.goalDetails}
         onClose={closeGoalDetails}
         onEdit={(goal) => {
           // TODO: Implement edit functionality
@@ -414,8 +454,7 @@ export default function HomeScreen() {
 
       {/*  Todo Details Modal */}
       <TodoDetailsModal
-        task={modalState.todoDetails.task}
-        isOpen={modalState.todoDetails.isOpen}
+        {...modalState.todoDetails}
         onClose={closeTodoDetails}
         onEdit={async (task) => {
           // TODO: Implement edit functionality

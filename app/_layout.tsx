@@ -14,21 +14,22 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { Tabs } from "expo-router";
-import  Toaster  from "react-native-toast-message";
+import Toaster from "react-native-toast-message";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Text, View, StyleSheet, Platform, TouchableOpacity, Pressable } from "react-native";
 import { NAV_THEME } from "@/lib/constants";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useRef, useState, useCallback } from "react";
-import { 
-  BottomSheetModalProvider, 
-  BottomSheetModal, 
+import {
+  BottomSheetModalProvider,
+  BottomSheetModal,
   BottomSheetView,
-  BottomSheetBackdrop 
+  BottomSheetBackdrop
 } from "@gorhom/bottom-sheet";
 import { InstantDataProvider } from "@/hooks/data-provider";
 import { PortalHost } from '@rn-primitives/portal';
+import { MessageCircle } from "lucide-react-native";
 // Removed Animated imports since we're not using animations
 
 const LIGHT_THEME: Theme = {
@@ -73,7 +74,7 @@ function RootLayoutNav() {
         <Tabs.Screen
           name="(app)"
           options={{
-            headerStyle: {display: "none"},
+            headerStyle: { display: "none" },
             headerShown: false,
             tabBarLabel: "Home",
             tabBarIcon: ({ color, size }) => (
@@ -81,7 +82,7 @@ function RootLayoutNav() {
             ),
           }}
         />
-        
+
         {/* Todos Tab */}
         <Tabs.Screen
           name="(app)/todos/index"
@@ -92,18 +93,18 @@ function RootLayoutNav() {
             ),
           }}
         />
-        
-        {/* Weather Tab */}
+
         <Tabs.Screen
-          name="weather"
+          name="chat"
           options={{
-            title: "Weather",
+            title: "Chat",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
-              <Text style={{ color, fontSize: size }}>🌦️</Text>
+              <MessageCircle size={size} color={color} />
             ),
           }}
         />
-        
+
         {/* Menu Stack Tab */}
         <Tabs.Screen
           name="menu"
@@ -115,7 +116,7 @@ function RootLayoutNav() {
             ),
           }}
         />
-        
+
         {/* Hide auth screens from tabs when signed in */}
         <Tabs.Screen
           name="(auth)"
@@ -126,7 +127,7 @@ function RootLayoutNav() {
           }}
         />
       </Tabs>
-      
+
       {/* FAB - only show when signed in */}
       {/* {isSignedIn && <FloatingActionButton />} */}
     </>

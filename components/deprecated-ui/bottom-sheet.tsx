@@ -9,7 +9,7 @@ import {
   BottomSheetFooter as GBottomSheetFooter,
   BottomSheetTextInput as GBottomSheetTextInput,
   BottomSheetView as GBottomSheetView,
-  
+  BottomSheetScrollView as GBottomSheetScrollView,
   useBottomSheetModal,
 } from '@gorhom/bottom-sheet';
 import type { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
@@ -140,6 +140,7 @@ const BottomSheetContent = React.forwardRef<BottomSheetContentRef, BottomSheetCo
           backgroundColor: colors.text,
         }}
         topInset={insets.top}
+        bottomInset={insets.bottom}
         android_keyboardInputMode={android_keyboardInputMode}
         {...props}
       />
@@ -214,6 +215,31 @@ function BottomSheetView({
   );
 }
 
+type BottomSheetScrollViewRef = React.ComponentRef<typeof GBottomSheetScrollView>;
+type BottomSheetScrollViewProps = Omit<
+  React.ComponentPropsWithoutRef<typeof GBottomSheetScrollView>,
+  'style'
+> & {
+  style?: ViewStyle;
+};
+
+const BottomSheetScrollView = React.forwardRef<
+  BottomSheetScrollViewRef,
+  BottomSheetScrollViewProps
+>(({ className, children, style, ...props }, ref) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <GBottomSheetScrollView
+      ref={ref}
+      style={[{ paddingBottom: insets.bottom }, style]}
+      className={cn('px-4', className)}
+      {...props}
+    >
+      {children}
+    </GBottomSheetScrollView>
+  );
+});
+
 type BottomSheetTextInputRef = React.ComponentRef<typeof GBottomSheetTextInput>;
 type BottomSheetTextInputProps = React.ComponentPropsWithoutRef<typeof GBottomSheetTextInput>;
 const BottomSheetTextInput = React.forwardRef<BottomSheetTextInputRef, BottomSheetTextInputProps>(
@@ -222,7 +248,7 @@ const BottomSheetTextInput = React.forwardRef<BottomSheetTextInputRef, BottomShe
       <GBottomSheetTextInput
         ref={ref}
         className={cn(
-          'rounded-md border border-input bg-background px-3 text-xl h-14 leading-[1.25] text-foreground items-center  placeholder:text-muted-foreground disabled:opacity-50',
+          'rounded-md border border-input bg-background px-3 text-xl h-14 leading-[1.25] text-foreground items-center placeholder:text-muted-foreground disabled:opacity-50',
           className
         )}
         placeholderClassName={cn('text-muted-foreground', placeholderClassName)}
@@ -328,6 +354,7 @@ export {
   BottomSheetFooter,
   BottomSheetHeader,
   BottomSheetOpenTrigger,
+  BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
   useBottomSheet,

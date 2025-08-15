@@ -12,23 +12,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 // import { LinearGradient } from 'expo-linear-gradient';
 
 
-export default function TodosScreen({route, navigation}: any) {
+export default function TodosScreen({ route, navigation }: any) {
   const { state, isLoading, error, updateTask, deleteTask } = useHandlers();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [refreshing, setRefreshing] = useState(false);
   const { modalState, openTodoDetails, closeTodoDetails } = useModalManager();
 
-  console.log({route, navigation});
+  console.log({ route, navigation });
   console.log("TodosScreen state:", state);
 
   const tasks = React.useMemo(() => state.tasks ?? [], [state]);
   const milestones = React.useMemo(() => state.milestones ?? [], [state]);
   console.warn("Tasks:", tasks);
-  
+
   const milestoneMap = useMemo(() => {
     const map: Record<string, string> = {};
     milestones.forEach(m => { map[m.id] = m.title; });
@@ -36,8 +37,8 @@ export default function TodosScreen({route, navigation}: any) {
   }, [milestones]);
 
   const completedTasks = useMemo(() => tasks.filter(t => t.completed).length, [tasks]);
-  const completionRate = useMemo(() => 
-    tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0, 
+  const completionRate = useMemo(() =>
+    tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0,
     [tasks.length, completedTasks]
   );
 
@@ -57,7 +58,7 @@ export default function TodosScreen({route, navigation}: any) {
   const handleDelete = (task: any) => {
     Alert.alert('Delete Task', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => { try { await deleteTask(task.id); } catch {} } }
+      { text: 'Delete', style: 'destructive', onPress: async () => { try { await deleteTask(task.id); } catch { } } }
     ]);
   };
 
@@ -99,17 +100,6 @@ export default function TodosScreen({route, navigation}: any) {
     </View>
   );
 
-  const ProgressBar = ({ progress }: { progress: number }) => (
-    <View className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-      <View 
-        className="h-full rounded-full"
-        style={{ 
-          width: `${progress}%`,
-          backgroundColor: isDark ? '#3B82F6' : '#1D4ED8'
-        }}
-      />
-    </View>
-  );
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className={`flex-1  ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
@@ -118,14 +108,14 @@ export default function TodosScreen({route, navigation}: any) {
         colors={isDark ? ['rgba(59, 130, 246, 0.05)', 'transparent'] : ['rgba(59, 130, 246, 0.03)', 'transparent']}
         className="absolute top-0 left-0 right-0 h-80"
       /> */}
-      
+
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={isDark ? '#3B82F6' : '#1D4ED8'}
           />
@@ -138,16 +128,16 @@ export default function TodosScreen({route, navigation}: any) {
               <Button size={"sm"} variant={"ghost"} onPress={() => {
                 router.back();
               }} >
-                <Ionicons name = "arrow-back-outline" size={24} color="black" />
+                <Ionicons name="arrow-back-outline" size={24} color="black" />
               </Button>
-            <View className="px-6 pt-6 ">
-              <Text className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                My Tasks
-              </Text>
-              <Text className={`text-md ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                {tasks.length === 0 ? 'Ready to get started?' : `Keep up the great work!`}
-              </Text>
-            </View>
+              <View className="px-6 pt-6 ">
+                <Text className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  My Tasks
+                </Text>
+                <Text className={`text-md ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {tasks.length === 0 ? 'Ready to get started?' : `Keep up the great work!`}
+                </Text>
+              </View>
             </View>
 
             {/* Stats Overview */}
@@ -158,7 +148,7 @@ export default function TodosScreen({route, navigation}: any) {
                     <Text className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       Progress Overview
                     </Text>
-                    <ProgressBar progress={completionRate} />
+                    <Progress value={completionRate} indicatorClassName={isDark ? 'bg-blue-400' : 'bg-blue-600'} />
                     <View className="flex-row justify-between mt-2">
                       <Text className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         {completionRate.toFixed(0)}% Complete
@@ -168,7 +158,7 @@ export default function TodosScreen({route, navigation}: any) {
                       </Text>
                     </View>
                   </View>
-                  
+
                   <View className="flex-row">
                     <StatCard
                       title="Total Tasks"
@@ -222,7 +212,7 @@ export default function TodosScreen({route, navigation}: any) {
             <Text className={`text-center px-8 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
               Create your first task to get started on your productivity journey
             </Text>
-            <Button size={"sm"} variant={"outline"} onPress={() => {}} >
+            <Button size={"sm"} variant={"outline"} onPress={() => { }} >
               <Text className="text-sm">Create Task</Text>
             </Button>
           </View>
@@ -240,7 +230,7 @@ export default function TodosScreen({route, navigation}: any) {
           </View>
         )}
       />
-      
+
       {/* Todo Details Modal */}
       <TodoDetailsModal
         task={modalState.todoDetails.task}
