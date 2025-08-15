@@ -1,6 +1,6 @@
 // chat/new.tsx - New AI chat session
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { Text } from '~/components/ui/text';
@@ -77,7 +77,7 @@ export default function NewChat() {
       // Generate a new chat session ID
       const sessionId = `chat_${Date.now()}`;
       // Navigate to chat session with initial message
-      router.push(`/chat/${sessionId}?initialMessage=${encodeURIComponent(messageToSend)}`);
+      router.replace(`/chat/details/${sessionId}?initialMessage=${encodeURIComponent(messageToSend)}`);
     }
   };
 
@@ -95,8 +95,9 @@ export default function NewChat() {
         
         <View className="space-y-2">
           {category.prompts.map((prompt: string, index: number) => (
-            <TouchableOpacity
+            <Pressable
               key={index}
+              className='mb-2'
               onPress={() => startChat(prompt)}
             >
               <Card className="p-3 bg-card border border-border hover:border-primary/30">
@@ -104,7 +105,7 @@ export default function NewChat() {
                   {prompt}
                 </Text>
               </Card>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </View>

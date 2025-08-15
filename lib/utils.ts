@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -35,15 +36,16 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-import Constants from 'expo-constants';
 
 export const generateAPIUrl = (relativePath: string) => {
-  const origin = Constants.experienceUrl.replace('exp://', 'http://');
+
+  console.log({experienceUrl: Constants.linkingUri, relativePath}); 
+  const origin = Constants?.experienceUrl?.replace('exp://', 'http://');
 
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
   if (process.env.NODE_ENV === 'development') {
-    return origin.concat(path);
+    return origin?.concat(path);
   }
 
   if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
