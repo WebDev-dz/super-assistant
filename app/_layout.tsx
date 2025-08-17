@@ -2,7 +2,7 @@ import "react-native-get-random-values";
 import "react-native-reanimated";
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-
+import '@/polyfills';
 import { ClerkProvider, useAuth, useUser } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 
@@ -104,6 +104,19 @@ function RootLayoutNav() {
             ),
           }}
         />
+
+        {/* Calendar Tab */}
+        <Tabs.Screen
+          name="calendar"
+          options={{
+            title: "Calendar",
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <MessageCircle size={size} color={color} />
+            ),
+          }}
+        />
+
 
         {/* Menu Stack Tab */}
         <Tabs.Screen

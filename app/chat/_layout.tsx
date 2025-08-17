@@ -32,12 +32,13 @@ import { AppSchema } from '@/instant.schema';
 import { CreateCalendarEvent } from '../../lib/validations';
 import { useHandlers } from '@/hooks/data-provider';
 
-type ChatRoom = {
-  id: string;
-  title: string;
-  userId: string;
-  updatedAt: string;
-  createdAt: number;
+type ChatDb = {
+    id: string;
+    title: string;
+    createdAt: string | number;
+    userId: string;
+    visibility: string;
+    updatedAt?: string | number | undefined;
 }
 
 
@@ -65,6 +66,8 @@ function CustomDrawerContent(props: any) {
       } 
     }
   });
+
+
 
   const handleStartEdit = (room: Required<UpdateParams<AppSchema, "chat">>) => {
     setEditingChatId(room.id);
@@ -99,7 +102,7 @@ function CustomDrawerContent(props: any) {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            deleteChat(room);
+            deleteChat(room.id);
             setShowActions(null);
             // Navigate away if currently viewing the deleted chat
             if (pathname === `/chat/${room.id}`) {
@@ -111,7 +114,8 @@ function CustomDrawerContent(props: any) {
     );
   };
 
-  const renderChatRoom = (room: Required<UpdateParams<AppSchema, "chat">>) => {
+
+  const renderChatRoom = (room: ChatDb) => {
     const isActive = pathname === `/chat/${room.id}`;
     const isEditing = editingChatId === room.id;
     const showActionsForThis = showActions === room.id;
@@ -121,7 +125,7 @@ function CustomDrawerContent(props: any) {
         <TouchableOpacity
           onPress={() => {
             if (!isEditing) {
-              router.push(`/chat/${room.id}`);
+              router.push(`/chat/details/${room.id}`);
               setShowActions(null);
             }
           }}
@@ -191,7 +195,7 @@ function CustomDrawerContent(props: any) {
         {showActionsForThis && !isEditing && (
           <View className="flex-row justify-end mt-2 space-x-2">
             <TouchableOpacity
-              onPress={() => handleStartEdit(room)}
+              onPress={() => handleStartEdit(room as any)}
               className="flex-row items-center px-3 py-2 bg-muted rounded-lg"
             >
               <Edit3 size={14} className="text-muted-foreground mr-1" />
@@ -199,7 +203,7 @@ function CustomDrawerContent(props: any) {
             </TouchableOpacity>
             
             <TouchableOpacity
-              onPress={() => handleDelete(room)}
+              onPress={() => handleDelete(room as any)}
               className="flex-row items-center px-3 py-2 bg-destructive/10 rounded-lg"
             >
               <Trash2 size={14} className="text-destructive mr-1" />
@@ -258,7 +262,7 @@ function CustomDrawerContent(props: any) {
           <Button
             variant="ghost"
             onPress={() => {
-              router.push('/chat/settings');
+              // router.push('/chat/settings');
               setShowActions(null);
               setEditingChatId(null);
             }}

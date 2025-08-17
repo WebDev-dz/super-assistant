@@ -41,7 +41,7 @@ export interface Milestone {
   reminders?: Reminder[]; // Array of Alarm-like objects
 }
 
-export interface Task {
+export interface Todo {
   id: string;
   milestoneId?: string | null; // null => standalone todo
   title: string;
@@ -99,7 +99,7 @@ export interface CalendarEvent {
 export interface DataState {
   goals: Goal[];
   milestones: Milestone[];
-  tasks: Task[];
+  tasks: Todo[];
   notifications: Notification[];
   calendarEvents: CalendarEvent[];
 }

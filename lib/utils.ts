@@ -40,19 +40,24 @@ export const getStatusColor = (status: string) => {
 export const generateAPIUrl = (relativePath: string) => {
 
   console.log({experienceUrl: Constants.linkingUri, relativePath}); 
-  const origin = Constants?.experienceUrl?.replace('exp://', 'http://');
+  const origin =  Constants?.experienceUrl?.replace('exp://', 'http://');
 
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
-  if (process.env.NODE_ENV === 'development') {
-    return origin?.concat(path);
-  }
+  const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL || origin;
 
-  if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
+  console.log({apiUrl, origin, path});
+
+  // if (process.env.NODE_ENV === 'development') {
+  //   return origin?.concat(path);
+  // }
+
+
+  if (!apiUrl) {
     throw new Error(
       'EXPO_PUBLIC_API_BASE_URL environment variable is not defined',
     );
   }
 
-  return process.env.EXPO_PUBLIC_API_BASE_URL.concat(path);
+  return apiUrl.concat(path);
 };

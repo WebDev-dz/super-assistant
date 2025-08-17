@@ -44,13 +44,7 @@ export default function AppStackLayout() {
           headerShown: true,
         }}
       />
-      <Stack.Screen
-        name="calendar/index"
-        options={{
-          title: 'Calendar',
-          headerShown: true,
-        }}
-      />
+     
     </Stack>
   );
 }
