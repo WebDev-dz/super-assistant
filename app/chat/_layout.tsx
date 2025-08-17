@@ -1,9 +1,9 @@
 // chat/_layout.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { useColorScheme } from '@/lib/useColorScheme';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { useRouter, usePathname } from 'expo-router';
 import { Text } from '~/components/ui/text';
@@ -18,95 +18,196 @@ import {
   Dice6, 
   Plus, 
   Home,
-  Menu 
+  Menu,
+  Edit3,
+  Trash2,
+  Check,
+  X,
+  MoreVertical
 } from 'lucide-react-native';
+import db from '@/db';
+import { Chat, UIMessage } from '@ai-sdk/react';
+import { id, UpdateParams } from '@instantdb/react-native';
+import { AppSchema } from '@/instant.schema';
+import { CreateCalendarEvent } from '../../lib/validations';
+import { useHandlers } from '@/hooks/data-provider';
 
-// Custom Drawer Content Component
+type ChatRoom = {
+  id: string;
+  title: string;
+  userId: string;
+  updatedAt: string;
+  createdAt: number;
+}
+
+
 function CustomDrawerContent(props: any) {
   const router = useRouter();
   const pathname = usePathname();
   const { colorScheme } = useColorScheme();
   
+  // State for managing rename functionality
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [showActions, setShowActions] = useState<string | null>(null);
+
+  const { createChat, updateChat, deleteChat } = useHandlers();
+  
   const isDark = colorScheme === 'dark';
   
   // Sample chat rooms - replace with your actual data
-  const chatRooms = [
-    { 
-      id: '1', 
-      name: 'General Chat', 
-      icon: MessageCircle, 
-      unreadCount: 3,
-      lastActive: '2 min ago',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-    },
-    { 
-      id: '2', 
-      name: 'Team Discussion', 
-      icon: Users, 
-      unreadCount: 0,
-      lastActive: '1 hour ago',
-      avatar: null
-    },
-    { 
-      id: '3', 
-      name: 'Project Alpha', 
-      icon: Briefcase, 
-      unreadCount: 7,
-      lastActive: '5 min ago',
-      avatar: null
-    },
-    { 
-      id: '4', 
-      name: 'Random', 
-      icon: Dice6, 
-      unreadCount: 1,
-      lastActive: '30 min ago',
-      avatar: null
-    },
-  ];
+  const chatRooms = db.useQuery({
+    chat: { 
+      $: { 
+        "order": {
+          "updatedAt": "desc"
+        } 
+      } 
+    }
+  });
 
-  const renderChatRoom = (room: any) => {
-    const IconComponent = room.icon;
+  const handleStartEdit = (room: Required<UpdateParams<AppSchema, "chat">>) => {
+    setEditingChatId(room.id);
+    setEditingName(room.title || '');
+    setShowActions(null);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingChatId && editingName.trim()) {
+      updateChat({ id: editingChatId, title: editingName.trim() });
+      setEditingChatId(null);
+      setEditingName('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChatId(null);
+    setEditingName('');
+  };
+
+  const handleDelete = (room: Required<UpdateParams<AppSchema, "chat">>) => {
+    Alert.alert(
+      'Delete Chat',
+      `Are you sure you want to delete "${room.title}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => setShowActions(null)
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteChat(room);
+            setShowActions(null);
+            // Navigate away if currently viewing the deleted chat
+            if (pathname === `/chat/${room.id}`) {
+              router.push('/chat');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderChatRoom = (room: Required<UpdateParams<AppSchema, "chat">>) => {
     const isActive = pathname === `/chat/${room.id}`;
-    
+    const isEditing = editingChatId === room.id;
+    const showActionsForThis = showActions === room.id;
+   
     return (
-      <TouchableOpacity
-        key={room.id}
-        onPress={() => router.push(`/chat/${room.id}`)}
-        className={`mx-3 mb-2 p-3 rounded-lg flex-row items-center ${
-          isActive 
-            ? 'bg-primary/10 border border-primary/20' 
-            : 'hover:bg-muted/50'
-        }`}
-      >
-        <Avatar alt={room.name} className="w-10 h-10 mr-3">
-          {room.avatar && <AvatarImage source={{ uri: room.avatar }} />}
-          <AvatarFallback>
-            <IconComponent 
-              size={20} 
-              className={isDark ? "text-white" : "text-black"}
-            />
-          </AvatarFallback>
-        </Avatar>
-        
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between">
-            <Text className={`font-medium ${isActive ? 'text-primary' : ''}`}>
-              {room.name}
-            </Text>
-            {room.unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2 px-2 py-1 min-w-[20px] h-5">
-                <Text className="text-xs text-white font-semibold">
-                  {room.unreadCount}
-                </Text>
-              </Badge>
+      <View key={room.id} className="mx-3 mb-2">
+        <TouchableOpacity
+          onPress={() => {
+            if (!isEditing) {
+              router.push(`/chat/${room.id}`);
+              setShowActions(null);
+            }
+          }}
+          onLongPress={() => setShowActions(showActionsForThis ? null : room.id)}
+          className={`p-3 rounded-lg flex-row items-center ${
+            isActive 
+              ? 'bg-primary/10 border border-primary/20' 
+              : 'hover:bg-muted/50'
+          }`}
+        >
+          <View className="flex-1">
+            <View className="flex-row items-center justify-between">
+              {isEditing ? (
+                <View className="flex-1 flex-row items-center">
+                  <TextInput
+                    value={editingName}
+                    onChangeText={setEditingName}
+                    className={`flex-1 px-2 py-1 text-base font-medium border rounded ${
+                      isDark 
+                        ? 'bg-muted border-border text-foreground' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    autoFocus
+                    selectTextOnFocus
+                    onSubmitEditing={handleSaveEdit}
+                    maxLength={50}
+                  />
+                  <TouchableOpacity
+                    onPress={handleSaveEdit}
+                    className="ml-2 p-1 bg-primary rounded"
+                  >
+                    <Check size={16} color="white" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleCancelEdit}
+                    className="ml-1 p-1 bg-muted rounded"
+                  >
+                    <X size={16} className="text-muted-foreground" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <Text className={`font-medium flex-1 ${isActive ? 'text-primary' : ''}`}>
+                    {room.title}
+                  </Text>
+                  <View className="flex-row items-center">
+                    
+                    <TouchableOpacity
+                      onPress={() => setShowActions(showActionsForThis ? null : room.id)}
+                      className="ml-2 p-1"
+                    >
+                      <MoreVertical size={16} className="text-muted-foreground" />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+            {!isEditing && (
+              <Text className="text-xs text-muted-foreground mt-1">
+                { new Date(room?.updatedAt || 0).toLocaleString()}
+              </Text>
             )}
           </View>
-          <Text className="text-xs text-muted-foreground mt-1">
-            {room.lastActive}
-          </Text>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        
+        {/* Action Buttons */}
+        {showActionsForThis && !isEditing && (
+          <View className="flex-row justify-end mt-2 space-x-2">
+            <TouchableOpacity
+              onPress={() => handleStartEdit(room)}
+              className="flex-row items-center px-3 py-2 bg-muted rounded-lg"
+            >
+              <Edit3 size={14} className="text-muted-foreground mr-1" />
+              <Text className="text-sm text-muted-foreground">Rename</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={() => handleDelete(room)}
+              className="flex-row items-center px-3 py-2 bg-destructive/10 rounded-lg"
+            >
+              <Trash2 size={14} className="text-destructive mr-1" />
+              <Text className="text-sm text-destructive">Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -118,7 +219,7 @@ function CustomDrawerContent(props: any) {
           Chat Rooms
         </Text>
         <Text className="text-sm text-muted-foreground">
-          {chatRooms.length} active conversations
+          {chatRooms?.data?.chat?.length || 0} active conversations
         </Text>
       </View>
 
@@ -129,7 +230,7 @@ function CustomDrawerContent(props: any) {
         showsVerticalScrollIndicator={false}
       >
         <View className="py-4">
-          {chatRooms.map(renderChatRoom)}
+          {chatRooms?.data?.chat?.map(renderChatRoom) || []}
         </View>
         
         <Separator className="mx-3 my-4" />
@@ -138,7 +239,16 @@ function CustomDrawerContent(props: any) {
         <View className="px-3 pb-4">
           <Button
             variant="outline"
-            onPress={() => router.push('/chat/new')}
+            onPress={() => {
+              createChat({
+                id: id(),
+                title: "New Chat",
+                userId: "1",
+                
+              });
+              setShowActions(null);
+              setEditingChatId(null);
+            }}
             className="flex-row items-center justify-center mb-3"
           >
             <Plus size={16} className="text-foreground mr-2" />
@@ -147,7 +257,11 @@ function CustomDrawerContent(props: any) {
           
           <Button
             variant="ghost"
-            onPress={() => router.push('/chat/settings')}
+            onPress={() => {
+              router.push('/chat/settings');
+              setShowActions(null);
+              setEditingChatId(null);
+            }}
             className="flex-row items-center justify-center"
           >
             <Text className="text-muted-foreground">Chat Settings</Text>

@@ -14,9 +14,11 @@ import { EventsActions, eventsActions } from '@/lib/actions/events';
 import { NotificationsActions, notificationsActions } from '@/lib/actions/notifications';
 import { AppSchema } from '@/instant.schema';
 import * as Calendar from 'expo-calendar';
+import { chatsActions, ChatsActions } from '@/lib/actions/chats';
+import { chatsHandlers } from '@/lib/handlers/chats';
 
 // InstantDB-backed data provider. Requires NEXT_PUBLIC_INSTANT_APP_ID to be set.
-type  Ctx = GoalsActions & MilestonesActions & TasksActions & EventsActions & NotificationsActions & {
+type  Ctx = GoalsActions & MilestonesActions & TasksActions & EventsActions & NotificationsActions & ChatsActions & {
   state: DataState;
   isLoading: boolean;
   error: any;
@@ -289,6 +291,62 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
     }
   };
 
+
+
+   // Chats handlers with actions
+   const createChat:  Ctx['createChat'] = async (g) => {
+    const handlers = await chatsHandlers.handleCreateChat(g);
+    try {
+      const result = await chatsActions.createChat(g);
+      handlers.success();
+      return result;
+    } catch (error) {
+      handlers.error(error);
+      throw error;
+    }
+  };
+
+  const updateChat:  Ctx['updateChat'] = async (chat) => {
+    try {
+      const result = await chatsActions.updateChat(chat);
+      const handlers = await chatsHandlers.handleUpdateChat(chat);
+      handlers.success();
+      return result;
+    } catch (error) {
+      const handlers = await chatsHandlers.handleUpdateChat(chat);
+      handlers.error(error);
+      throw error;
+    }
+  };
+
+  const deleteChat:  Ctx['deleteChat'] = async (id) => {
+    try {
+      // Remove related milestones first
+      // const relatedMessages = messages.filter((m) => m.chatId === id);
+      // await deleteBulkMessages(relatedMessages.map(m => m.id));
+      
+      await chatsActions.deleteChat(id);
+      const handlers = await chatsHandlers.handleDeleteChat(id);
+      handlers.success();
+    } catch (error) {
+      const handlers = await chatsHandlers.handleDeleteChat(id);
+      handlers.error(error);
+      throw error;
+    }
+  };
+
+  const deleteBulkChats:  Ctx['deleteBulkChats'] = async (chatIds) => {
+    try {
+      await chatsActions.deleteBulkChats(chatIds);
+      const handlers = await chatsHandlers.handleDeleteBulkChats(chatIds);
+      handlers.success();
+    } catch (error) {
+      const handlers = await chatsHandlers.handleDeleteBulkChats(chatIds);
+      handlers.error(error);
+      throw error;
+    }
+  };
+
   // Events handlers with actions
   const createEvent:  Ctx['createEvent'] = async (event) => {
     try {
@@ -511,6 +569,12 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
     updateGoal,
     deleteGoal,
     deleteBulkGoals,
+
+    // Chats handlers
+    createChat,
+    updateChat,
+    deleteChat,
+    deleteBulkChats,
 
     // Milestones handlers
     createMilestone,

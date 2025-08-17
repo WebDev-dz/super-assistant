@@ -233,6 +233,26 @@ export const CalendarEventSchema = z.object({
     .describe("Timestamp when the calendar event was last modified"),
 });
 
+export const ChatSchema = z.object({
+  id: z.string().describe("Unique identifier for the chat"),
+  title: z.string().describe("Title of the chat"),
+  userId: z.string().describe("ID of the user who owns this chat"),
+  createdAt: z.coerce.number().describe("Timestamp when the chat was created").default(Date.now()),
+  updatedAt: z.coerce.number().optional().nullable()
+    .describe("Timestamp when the chat was last modified").default(Date.now()),
+});
+
+
+export const CreateChatSchema = ChatSchema.omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const UpdateChatSchema = CreateChatSchema.partial().extend({
+  updatedAt: z.coerce.number().describe("Timestamp when the chat was last updated"),
+});
+
+
 // Input schemas for creating/updating (without id and timestamps)
 export const CreateUserSchema = UserSchema.omit({ id: true });
 export const UpdateUserSchema = CreateUserSchema.partial();
