@@ -17,7 +17,7 @@ import {
 import { useColorScheme } from "@/lib/useColorScheme";
 import { useHandlers } from "@/hooks/data-provider";
 import { Ionicons } from "@expo/vector-icons";
-import type { Task } from "@/lib/types";
+import type { Todo } from "@/lib/types";
 import TodoForm from "../forms/TodoForm";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,11 +31,11 @@ import { useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface TodoDetailsModalProps {
-  task: Task | null;
+  task: Todo | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit?: (task: Task) => Promise<void>;
-  onCreate?: (task: Task) => Promise<void>;
+  onEdit?: (task: Todo) => Promise<void>;
+  onCreate?: (task: Todo) => Promise<void>;
   mode: 'create' | 'update';
   milestoneMap: Record<string, string>;
   milestoneId?: string; // Required when creating a new task for a specific milestone
@@ -112,7 +112,7 @@ export default function TodoDetailsModal({
     ]);
   };
 
-  const handleSubmit = async (values: Task) => {
+  const handleSubmit = async (values: Todo) => {
     try {
       if (mode === 'create') {
         const taskData = {
@@ -153,20 +153,7 @@ export default function TodoDetailsModal({
   if (!task) return null;
 
 
-  const renderFooter = () => {
-    return (<View
 
-      style={{ paddingBottom: insets.bottom }}
-
-      className="px-4 pt-1.5"
-    >
-      <Button onPress={() => handleSubmit(form.getValues())} className="w-full">
-        <Text className={buttonTextVariants({ variant: "default" })}>
-          {mode === 'create' ? 'Create Task' : 'Update Task'}
-        </Text>
-      </Button>
-    </View>)
-  }
 
   return (
     <BottomSheet>
@@ -176,7 +163,6 @@ export default function TodoDetailsModal({
         enablePanDownToClose={true}
         onDismiss={onClose}
         // enableDynamicSizing={true}
-        footerComponent={renderFooter}
 
       >
         <BottomSheetHeader>
@@ -188,7 +174,7 @@ export default function TodoDetailsModal({
           <BottomSheetCloseTrigger />
         </BottomSheetHeader>
 
-        <BottomSheetView className="gap-4 flex-1">
+        <BottomSheetScrollView className="gap-4 flex-1">
           <Card className={isDark ? "bg-gray-800" : "bg-white"}>
             <CardContent className="gap-3 mt-6">
               <TodoForm
@@ -218,7 +204,7 @@ export default function TodoDetailsModal({
             </CardContent>
           </Card>
 
-        </BottomSheetView>
+        </BottomSheetScrollView>
 
       </BottomSheetContent>
     </BottomSheet>

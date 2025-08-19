@@ -33,44 +33,45 @@ export const UserSchema = z.object({
 
 // Goals entity schema
 export const GoalSchema = z.object({
+  id: z.string().describe("Unique identifier for the goal"),
   title: z.string().min(3, { message: "Goal title is required." })
     .describe("Clear, descriptive title for the goal"),
-  description: z.string().optional().nullable()
+  description: z.string().nullish()
     .describe("Detailed description explaining the goal's purpose and scope"),
   status: StatusSchema.describe("Current progress status of the goal"),
   priority: PrioritySchema.describe("Priority level for resource allocation and focus"),
-  category: z.coerce.string().optional().nullable()
+  category: z.string().nullish()
     .describe("Category or domain this goal belongs to (e.g., 'Health', 'Career', 'Personal')"),
-  tags: z.array(z.string()).optional().nullable()
+  tags: z.array(z.string()).nullish()
     .describe("Array of tags for organizing and filtering goals"),
 
   // Dates
-  startDate: z.coerce.string().describe("When work on this goal begins (ISO date string)"),
-  targetEndDate: z.coerce.string().describe("Planned completion date for the goal (ISO date string)"),
-  actualEndDate: z.coerce.string().optional().nullable()
+  startDate: z.string().describe("When work on this goal begins (ISO date string)"),
+  targetEndDate: z.string().describe("Planned completion date for the goal (ISO date string)"),
+  actualEndDate: z.string().nullish()
     .describe("Actual completion date when goal is finished (ISO date string)"),
-  createdAt: z.coerce.string().describe("Timestamp when the goal was created (ISO date string)"),
-  updatedAt: z.coerce.string().optional().nullable()
+  createdAt: z.string().describe("Timestamp when the goal was created (ISO date string)"),
+  updatedAt: z.string().nullish()
     .describe("Timestamp when the goal was last modified (ISO date string)"),
 
   // Progress tracking
-  overallProgress: z.coerce.number().min(0).max(100)
+  overallProgress: z.number().min(0).max(100)
     .describe("Overall completion percentage calculated from milestone progress"),
 
   owner: z.string().describe("User ID of the person responsible for this goal"),
 
   // Resources
-  budget: z.coerce.number().min(0).optional().nullable()
+  budget: z.number().min(0).nullish()
     .describe("Budget allocated for achieving this goal (in currency units)"),
-  estimatedTotalHours: z.coerce.number().min(0).optional().nullable()
+  estimatedTotalHours: z.number().min(0).nullish()
     .describe("Estimated total time required to complete the goal"),
-  actualTotalHours: z.coerce.number().min(0).optional().nullable()
+  actualTotalHours: z.number().min(0).nullish()
     .describe("Actual time spent on the goal (updated from task time tracking)"),
 
   // Calendar integration
-  calendarId: z.string().optional().nullable()
+  calendarId: z.string().nullish()
     .describe("ID of the calendar where goal events are stored"),
-});
+}).strict();
 
 // Milestones entity schema
 export const MilestoneSchema = z.object({
@@ -151,10 +152,10 @@ export const TaskSchema = z.object({
   priority: PrioritySchema.describe("Priority level for task scheduling and focus"),
 
   // Dates
-  dueDate: z.coerce.date().optional().nullable()
+  dueDate: z.coerce.string().optional().nullable()
     .describe("When this task should be completed"),
-  createdAt: z.coerce.date().describe("Timestamp when the task was created"),
-  updatedAt: z.coerce.date().optional().nullable()
+  createdAt: z.coerce.string().describe("Timestamp when the task was created"),
+  updatedAt: z.coerce.string().optional().nullable()
     .describe("Timestamp when the task was last modified"),
 
   // Time tracking
@@ -233,6 +234,31 @@ export const CalendarEventSchema = z.object({
     .describe("Timestamp when the calendar event was last modified"),
 });
 
+export const MessageSchema = z.object({
+  id: z.string().describe("Unique identifier for the message"),
+  chatId: z.string().describe("ID of the chat this message belongs to"),
+  userId: z.string().describe("ID of the user who sent the message"),
+  content: z.string().min(1, "Message cannot be empty").describe("The message content"),
+  attachments: z.array(z.object({
+    type: z.string().describe("Type of attachment (e.g., 'image', 'file', 'audio')"),
+    url: z.string().describe("URL or path to the attachment"),
+    name: z.string().describe("Original filename or title of the attachment"),
+    size: z.number().optional().describe("Size of the attachment in bytes"),
+  })).optional().default([]),
+  isAI: z.boolean().default(false).describe("Whether the message is from AI"),
+  createdAt: z.coerce.number().describe("Timestamp when the message was created").default(Date.now()),
+  updatedAt: z.coerce.number().optional().nullable()
+    .describe("Timestamp when the message was last modified").default(Date.now()),
+});
+
+export const CreateMessageSchema = MessageSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const UpdateMessageSchema = CreateMessageSchema.partial();
+
 export const ChatSchema = z.object({
   id: z.string().describe("Unique identifier for the chat"),
   title: z.string().describe("Title of the chat"),
@@ -258,14 +284,14 @@ export const CreateUserSchema = UserSchema.omit({ id: true });
 export const UpdateUserSchema = CreateUserSchema.partial();
 
 export const CreateGoalSchema = GoalSchema.omit({
-  //   id: true,
-  //   createdAt: true,
-  //   updatedAt: true,
-  //   overallProgress: true // This should be calculated
-});
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  overallProgress: true // This should be calculated
+}).strict();
 export const UpdateGoalSchema = CreateGoalSchema.partial().extend({
-  updatedAt: z.coerce.number().describe("Timestamp when the goal was last updated"),
-});
+  updatedAt: z.string().describe("Timestamp when the goal was last updated"),
+}).strict();
 
 export const CreateMilestoneSchema = MilestoneSchema.omit({
   id: true,

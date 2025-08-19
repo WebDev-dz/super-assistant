@@ -1,3 +1,8 @@
+import { InferUITool, UIMessage } from "ai";
+import { createGoalAi } from "./ai/tools/goal";
+import { createTaskAi } from "./ai/tools/task";
+import { createMilestoneAi } from "./ai/tools/milestone";
+
 export type Status = 'not_started' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled';
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -104,6 +109,51 @@ export interface DataState {
   calendarEvents: CalendarEvent[];
 }
 
+
+
+
 export type PartialDeep<T> = {
   [K in keyof T]?: T[K] extends object ? PartialDeep<T[K]> : T[K];
 };
+
+
+type GoalTool = InferUITool<typeof createGoalAi>;
+type TodoTool = InferUITool<typeof createTaskAi>;
+type MilestoneTool = InferUITool<typeof createMilestoneAi>;
+
+
+type MessageMetadata = {
+    // TO-DO
+}
+
+export type ChatTools = {
+  createGoal: GoalTool,
+  createTodo: TodoTool,
+  createMilestone: MilestoneTool
+};
+
+type ArtifactKind = "text" | "goal" | "milestone" | "todo"
+
+export type CustomUIDataTypes = {
+  textDelta: string;
+  goalDelta: string;
+  milestoneDelta: string;
+  todoDelta: string;
+  appendMessage: string;
+  id: string;
+  title: string;
+  kind: ArtifactKind;
+  clear: null;
+  finish: null;
+};
+export type ChatMessage = UIMessage<
+  MessageMetadata,
+  CustomUIDataTypes,
+  ChatTools
+>;
+
+export interface Attachment {
+  name: string;
+  url: string;
+  contentType: string;
+}

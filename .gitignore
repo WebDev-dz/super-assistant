@@ -11,6 +11,10 @@ expo-env.d.ts
 /ios
 .env
 
+# folders
+
+debug_layouts/
+
 # Native
 .kotlin/
 *.orig.*

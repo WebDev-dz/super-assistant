@@ -44,8 +44,8 @@ export const generateAPIUrl = (relativePath: string) => {
 
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
-  const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL || origin;
-
+  let apiUrl =  origin || process.env.EXPO_PUBLIC_API_BASE_URL;
+  apiUrl = apiUrl.concat(path);
   console.log({apiUrl, origin, path});
 
   // if (process.env.NODE_ENV === 'development') {
@@ -59,5 +59,5 @@ export const generateAPIUrl = (relativePath: string) => {
     );
   }
 
-  return apiUrl.concat(path);
+  return apiUrl
 };

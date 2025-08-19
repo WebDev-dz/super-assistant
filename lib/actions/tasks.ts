@@ -236,21 +236,8 @@ const updateTask = async (task: UpdateParams<AppSchema, "tasks">) => {
     throw new Error(`Invalid task data: ${error.message}`);
   }
 
-  // Get existing task to find calendar event ID
-  const existingTasks = await db.useQuery({ tasks: { $: { where: { id: task.id } } } });
-  const existingTask = existingTasks.data?.tasks?.[0];
-  const existingCalendarEventId = existingTask?.calendarEventId;
 
-  // Update calendar event
-  let calendarEventId: string | null = null;
-  if (data.hasAlarm !== undefined || data.alarm !== undefined) {
-    calendarEventId = await updateCalendarEvent(
-      { ...data, hasAlarm: data.hasAlarm, alarm: data.alarm },
-      existingCalendarEventId
-    );
-  } else {
-    calendarEventId = existingCalendarEventId;
-  }
+  
 
   // Update task in database
   const query = await updateQuery("tasks", {
@@ -258,7 +245,6 @@ const updateTask = async (task: UpdateParams<AppSchema, "tasks">) => {
     dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
     updatedAt: new Date().toISOString(),
     id: task.id,
-    calendarEventId: calendarEventId,
   });
 
   const result = await db.transact(query);

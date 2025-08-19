@@ -17,6 +17,7 @@ function Calendar({ theme, ...props }: React.ComponentProps<typeof RNCalendar>) 
     <RNCalendar
       key={`${id}-${colorScheme}`}
       theme={getTheme(isDarkColorScheme, theme)}
+      
       {...props}
     />
   );
