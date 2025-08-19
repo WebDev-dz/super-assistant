@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { id as instantId, UpdateParams } from '@instantdb/react';
-import type { CalendarEvent, DataState, Goal, Milestone, Notification, Task } from '@/lib/types';
+import type { CalendarEvent, DataState, Goal, Milestone, Notification, Todo } from '@/lib/types';
 import db from '@/db';
 import { GoalsHandlers, goalsHandlers } from '@/lib/handlers/goals';
 import { milestonesHandlers, MilestonesHandlers } from '@/lib/handlers/milestones';
@@ -37,7 +37,7 @@ type  Ctx = GoalsActions & MilestonesActions & TasksActions & EventsActions & No
 
 const HandlersContext = React.createContext< Ctx | null>(null);
 
-function computeMilestoneProgress(tasks: Task[], milestoneId: string, msCompleted: boolean) {
+function computeMilestoneProgress(tasks: Todo[], milestoneId: string, msCompleted: boolean) {
   const ts = tasks.filter((t) => t.milestoneId === milestoneId);
   if (ts.length === 0) return msCompleted ? 100 : 0;
   const done = ts.filter((t) => t.completed).length;
@@ -86,7 +86,7 @@ export function InstantDataProvider({ children, ownerId }: { children: React.Rea
   
   const goals: Goal[] = React.useMemo(() => (data?.goals ?? []) as any, [data]);
   const milestones: Milestone[] = React.useMemo(() => (data?.milestones ?? []) as any, [data]);
-  const tasks: Task[] = React.useMemo(() => (data?.tasks ?? []) as any, [data]);
+  const tasks: Todo[] = React.useMemo(() => (data?.tasks ?? []) as any, [data]);
   const notifications: Notification[] = React.useMemo(() => (data?.notifications ?? []) as any, [data]);
   const calendarEvents: CalendarEvent[] = React.useMemo(() => (data?.calendarEvents ?? []) as any, [data]);
 

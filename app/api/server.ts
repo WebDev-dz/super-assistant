@@ -1,6 +1,7 @@
 import { init, id, TransactionChunk } from "@instantdb/admin";
 import { generateHashedPassword } from "@/utils";
 import { ChatSDKError } from "@/lib/errors";
+import schema from "@/instant.schema";
 
 // ID for app: goals-app
 const ADMIN_TOKEN = process.env.INSTANT_APP_ADMIN_TOKEN!;
@@ -8,6 +9,9 @@ const APP_ID = process.env.EXPO_PUBLIC_INSTANT_APP_ID!;
 const serverDb = init({
   appId: APP_ID,
   adminToken: ADMIN_TOKEN,
+//   @ts-ignore
+  schema
+
 });
 
 // User functions
