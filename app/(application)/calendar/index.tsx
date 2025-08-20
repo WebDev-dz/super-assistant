@@ -65,7 +65,7 @@ const CalendarScreen = (props: Props) => {
 		}, {} as Record<string, Todo[]>);
 
 		return Object.entries(groupedTasks).map(([date, tasks]) => ({
-			title: date,
+			title: {title: date},
 			data: tasks
 		}));
 	}, [data?.tasks]);
@@ -266,7 +266,10 @@ const CalendarScreen = (props: Props) => {
 					alignItems: "center",
 					backgroundColor: isDark ? '#E5E7EB' : '#374151'
 				}}
-				renderSectionHeader={({ section }) => (
+				renderSectionHeader={(section) => {
+
+					console.log({section})
+					return (
 					<View className={cn("flex justify-center border-gray-200 border-[1px] py-3 items-center px-4", {
 						" bg-gray-900": isDark,
 						" bg-white": !isDark
@@ -274,9 +277,9 @@ const CalendarScreen = (props: Props) => {
 						<Text className={cn("text-2xl", {
 							"text-white bg-gray-900": isDark,
 							"text-black bg-white": !isDark
-						})}>{new Date(section.title as string).toDateString()}</Text>
+						})}>{new Date(section?.title).toDateString()}</Text>
 					</View>
-				)}
+	)}}
 				dayFormat={'yyyy-MM-d'}
 			/>
 		</CalendarProvider>

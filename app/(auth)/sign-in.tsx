@@ -23,8 +23,7 @@ import db from "@/db";
 // Form validation schema
 const signInFormSchema = z.object({
   emailAddress: z
-    .string()
-    .min(1, { message: "Email address is required." })
+    
     .email({ message: "Please enter a valid email address." }),
   password: z
     .string()
@@ -61,6 +60,7 @@ const SignInScreen = () => {
     if (!isLoaded) return;
 
     try {
+      console.log("signed in with clerk")
       const completeSignIn = await signIn.create({
         identifier: values.emailAddress,
         password: values.password,
@@ -95,10 +95,10 @@ const SignInScreen = () => {
 
       if (createdSessionId) {
         setActive?.({ session: createdSessionId });
-        router.replace("/(tabs)");
+        router.replace("/");
       }
     } catch (err) {
-      Alert.alert("Error", "Google sign-in failed");
+      Alert.alert("Error", JSON.stringify({err}));
     }
   };
 

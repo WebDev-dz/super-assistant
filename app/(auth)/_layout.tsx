@@ -1,9 +1,19 @@
 // app/(auth)/_layout.tsx
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { useAuth } from '@clerk/clerk-expo';
+import { useEffect } from 'react';
 
 export default function AuthLayout() {
   const { colorScheme } = useColorScheme();
+
+  const {isSignedIn } = useAuth()
+
+  useEffect(() => {
+    if (isSignedIn){
+      router.push("/")
+    }
+  },[isSignedIn])
 
   return (
     <Stack

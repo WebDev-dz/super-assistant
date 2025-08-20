@@ -22,8 +22,7 @@ import { useColorScheme } from "@/lib/useColorScheme";
 // Form validation schema
 const forgotPasswordSchema = z.object({
   emailAddress: z
-    .string()
-    .min(1, { message: "Email address is required." })
+    
     .email({ message: "Please enter a valid email address." }),
 });
 

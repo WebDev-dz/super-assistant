@@ -34,26 +34,34 @@ const DARK_THEME: Theme = {
 
 function AppLayout() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
+
+  const { userId } = useAuth()
   return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      className={`flex-1  ${isDarkColorScheme ? "bg-gray-950" : "bg-gray-50"}`}
-    >
-      <Stack>
-        <Stack.Screen
-          name="(application)"
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="(auth)"
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack>
-    </SafeAreaView>
+    <InstantDataProvider ownerId={userId || ""}>
+      <BottomSheetModalProvider>
+        <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+        <SafeAreaView
+          edges={["top", "left", "right"]}
+          className={`flex-1  ${isDarkColorScheme ? "bg-gray-950" : "bg-gray-50"}`}
+        >
+          <Stack>
+            <Stack.Screen
+              name="(application)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="(auth)"
+              options={{
+                headerShown: false,
+              }}
+            />
+          </Stack>
+        </SafeAreaView>
+      </BottomSheetModalProvider>
+    </InstantDataProvider>
+
   );
 }
 
@@ -65,7 +73,6 @@ export default function RootLayout({
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
-  const { isSignedIn, userId } = useAuth();
 
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {
@@ -87,12 +94,8 @@ export default function RootLayout({
     <ClerkProvider tokenCache={tokenCache}>
       <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <InstantDataProvider ownerId={userId || ""}>
-            <BottomSheetModalProvider>
-              <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-              <AppLayout />
-            </BottomSheetModalProvider>
-          </InstantDataProvider>
+          <AppLayout />
+
           <Toaster />
           <PortalHost />
         </GestureHandlerRootView>
