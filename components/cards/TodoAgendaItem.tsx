@@ -1,42 +1,22 @@
 import React, { useCallback } from 'react';
-import { Alert, View, Text, TouchableOpacity, Button } from 'react-native';
-import testIDs from '../testIDs';
+import { Alert, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { categories } from '@/components/ui/category-selector';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge, badgeTextVariants, getPriorityVariant } from '@/components/ui/badge';
 import { useColorScheme } from '@/lib/useColorScheme';
-
-type Priority = 'low' | 'normal' | 'high' | 'urgent';
-
-export interface Todo {
-  id: string;
-  milestoneId?: string | null; // null => standalone todo
-  title: string;
-  description?: string;
-  completed: boolean;
-  priority: Priority;
-  dueDate?: string; // ISO
-  createdAt: string; // ISO
-  updatedAt?: string; // ISO
-  estimatedHours?: number;
-  actualHours?: number;
-  tags?: string[]; // Array of strings
-}
+import type { Todo } from '@/lib/types';
+import testIDs from '@/app/(application)/calendar/testIDs';
 
 interface ItemProps {
   item: Todo;
   onToggleComplete?: (id: string, completed: boolean) => void;
 }
 
-const AgendaItem = (props: ItemProps) => {
+const TodoAgendaItem = (props: ItemProps) => {
   const { item, onToggleComplete } = props;
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-
-  const buttonPressed = useCallback(() => {
-    Alert.alert('Task Info', `Details: ${item.description || 'No description available'}`);
-  }, [item]);
 
   const itemPressed = useCallback(() => {
     Alert.alert('Task Selected', `Task: ${item.title}`);
@@ -54,9 +34,9 @@ const AgendaItem = (props: ItemProps) => {
     );
   }
 
-  const categoryName = "health"
-  const category = categories.filter(c => c.value === categoryName).at(0)!
-  const isSelected = true
+  const categoryName = 'health';
+  const category = categories.filter(c => c.value === categoryName).at(0)!;
+  const isSelected = true;
 
   return (
     <TouchableOpacity
@@ -81,14 +61,14 @@ const AgendaItem = (props: ItemProps) => {
           <View className='flex-row items-start gap-2'>
             <View
               className={`items-center justify-center rounded-xl ${
-                isSelected 
-                  ? category.selectedBg 
+                isSelected
+                  ? category.selectedBg
                   : isDark ? 'bg-gray-700' : 'bg-gray-50'
               } p-2.5`}
             >
               <View
                 className={`w-9 h-9 rounded-lg items-center justify-center ${
-                  isSelected ? "" : category.bgColor
+                  isSelected ? '' : category.bgColor
                 }`}
                 style={
                   isSelected ? { backgroundColor: category.color } : undefined
@@ -97,7 +77,7 @@ const AgendaItem = (props: ItemProps) => {
                 <Ionicons
                   name={category.icon}
                   size={18}
-                  color={isSelected ? "#ffffff" : category.color}
+                  color={isSelected ? '#ffffff' : category.color}
                 />
               </View>
             </View>
@@ -160,4 +140,6 @@ const AgendaItem = (props: ItemProps) => {
   );
 };
 
-export default React.memo(AgendaItem);
+export default React.memo(TodoAgendaItem);
+
+

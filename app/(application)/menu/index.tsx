@@ -119,7 +119,7 @@ export default function MenuScreen() {
               subtitle:
                 user?.emailAddresses[0]?.emailAddress || "Manage your profile",
               onPress: () =>
-                Alert.alert("Profile", "Profile page coming soon!"),
+                router.push("/(application)/menu/profile"),
             },
             // {
             //   icon: 'settings-outline' as const,

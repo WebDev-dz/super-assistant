@@ -28,7 +28,7 @@ export default function MenuLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

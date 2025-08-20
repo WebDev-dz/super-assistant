@@ -2,12 +2,11 @@ import React, { useRef, useCallback } from 'react';
 import { Alert, Animated, DefaultSectionT, Easing, SectionListData, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useRouter } from 'expo-router';
-import { ExpandableCalendar, AgendaList, CalendarProvider, WeekCalendar, } from 'react-native-calendars';
+import { AgendaList, CalendarProvider, WeekCalendar, } from 'react-native-calendars';
 import testIDs from './testIDs';
 import { Calendar } from '~/components/deprecated-ui/calendar'; // Assuming a Calendar component exists
+import ExpandableCalendarContainer from '@/components/ui/expandable-calendar';
 
-import { getMarkedDates } from './mocks/agendaItems';
-import AgendaItem from './mocks/AgendaItem';
 import { getTheme, themeColor, lightThemeColor } from './mocks/theme';
 import type XDate from 'xdate';
 import db from '@/db';
@@ -21,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import z from 'zod';
+import TodoAgendaItem from '@/components/cards/TodoAgendaItem';
 const leftArrowIcon = require('./img/previous.png');
 const rightArrowIcon = require('./img/next.png');
 
@@ -74,10 +74,26 @@ const CalendarScreen = (props: Props) => {
 
 
 
-	const marked = useRef(getMarkedDates());
-	marked.current = {
-		'2025-08-17': { marked: true, dotColor: 'red' }
-	};
+	const markedDates = React.useMemo(() => {
+		const result: Record<string, { marked?: boolean; dotColor?: string; selected?: boolean }> = {};
+		if (!data?.tasks) return result;
+
+		const priorityColor: Record<string, string> = {
+			low: '#10B981',
+			medium: '#F59E0B',
+			high: '#F97316',
+			urgent: '#EF4444'
+		};
+
+		for (const task of data.tasks) {
+			if (!task?.dueDate) continue;
+			const dateKey = new Date(task.dueDate).toISOString().split('T')[0];
+			const color = task.completed ? '#9CA3AF' : (priorityColor as any)[task.priority] || '#3B82F6';
+			result[dateKey] = { ...(result[dateKey] || {}), marked: true, dotColor: color };
+		}
+
+		return result;
+	}, [data?.tasks]);
 
 	const theme = useRef(getTheme());
 	const todayBtnTheme = useRef({
@@ -99,7 +115,7 @@ const CalendarScreen = (props: Props) => {
 	}
 
 	const renderItem = useCallback(({ item }: any) => {
-		return <AgendaItem item={item} onToggleComplete={handleToggleComplete} />;
+		return <TodoAgendaItem item={item} onToggleComplete={handleToggleComplete} />;
 	}, [handleToggleComplete]);
 
 	const calendarRef = useRef<{ toggleCalendarPosition: () => boolean }>(null);
@@ -154,7 +170,7 @@ const CalendarScreen = (props: Props) => {
 
 			<View className="px-4 py-3 flex-row items-center justify-between bg-background border-b border-border">
 				<TouchableOpacity
-					onPress={() => navigation?.openDrawer()}
+					onPress={() => (navigation as any)?.openDrawer()}
 					className="p-2 -ml-2"
 				>
 					<Ionicons
@@ -190,52 +206,55 @@ const CalendarScreen = (props: Props) => {
 				</TouchableOpacity>
 			</View>
 			<Form {...form}>
-				{isWeekView ? (
-					<FormField name='date' render={({ field: { value, onChange } }) => (
-						<WeekCalendar
-							testID={testIDs.weekCalendar.CONTAINER}
-							firstDay={1}
-							markedDates={marked.current}
-							theme={{
-								textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
-								todayTextColor: themeColor,
-								selectedDayBackgroundColor: themeColor,
-								selectedDayTextColor: '#FFFFFF',
-								textDayFontSize: 16
-							}}
-							onDayPress={onChange}
-							current={value}
-						/>
-					)} />
-
-				) : (
-					<FormField name='date' render={({ field: { value, onChange } }) => (
-						<Calendar
-							// style={{ height: 358, }}
-							// @ts-ignore
-
-							onDayPress={(day) => {
-								onChange?.(day.dateString === value ? '' : day.dateString);
-							}}
-							markedDates={{
-								[value ?? '']: {
-									selected: true,
-								},
-							}}
-							
-							theme={{
-								textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
-								timeLabel: {
-									color: isDark ? '#9CA3AF' : '#6B7280',
-								}
-
-							}}
-
-							current={value} // opens calendar on selected date
-							{...props}
-						/>
-					)} />
-				)}
+				<ExpandableCalendarContainer
+					expanded={!isWeekView}
+					className="w-full"
+					collapsedClassName="items-center"
+					expandedClassName="items-center"
+					collapsedContent={(
+						<FormField name='date' render={({ field: { value, onChange } }) => (
+							<WeekCalendar
+								testID={testIDs.weekCalendar.CONTAINER}
+								firstDay={1}
+								markedDates={markedDates}
+								theme={{
+									textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+									todayTextColor: themeColor,
+									selectedDayBackgroundColor: themeColor,
+									selectedDayTextColor: '#FFFFFF',
+									textDayFontSize: 16
+								}}
+								onDayPress={onChange}
+								current={value}
+							/>
+						)} />
+					)}
+					expandedContent={(
+						<FormField name='date' render={({ field: { value, onChange } }) => (
+							<Calendar
+								// @ts-ignore
+								onDayPress={(day) => {
+									onChange?.(day.dateString === value ? '' : day.dateString);
+								}}
+								markedDates={{
+									...markedDates,
+									[value ?? '']: {
+										selected: true,
+										...(markedDates?.[value ?? ''] || {})
+									},
+								}}
+								theme={{
+									textSectionTitleColor: isDark ? '#9CA3AF' : '#6B7280',
+									timeLabel: {
+										color: isDark ? '#9CA3AF' : '#6B7280',
+									}
+								}}
+								current={value}
+								{...props}
+							/>
+						)} />
+					)}
+				/>
 			</Form>
 
 			<AgendaList
@@ -247,7 +266,7 @@ const CalendarScreen = (props: Props) => {
 					alignItems: "center",
 					backgroundColor: isDark ? '#E5E7EB' : '#374151'
 				}}
-				renderSectionHeader={(section) => (
+				renderSectionHeader={({ section }) => (
 					<View className={cn("flex justify-center border-gray-200 border-[1px] py-3 items-center px-4", {
 						" bg-gray-900": isDark,
 						" bg-white": !isDark
@@ -255,7 +274,7 @@ const CalendarScreen = (props: Props) => {
 						<Text className={cn("text-2xl", {
 							"text-white bg-gray-900": isDark,
 							"text-black bg-white": !isDark
-						})}>{new Date(section as string).toDateString()}</Text>
+						})}>{new Date(section.title as string).toDateString()}</Text>
 					</View>
 				)}
 				dayFormat={'yyyy-MM-d'}

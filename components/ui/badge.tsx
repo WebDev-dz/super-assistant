@@ -52,13 +52,14 @@ function Badge({ className, variant, asChild, ...props }: BadgeProps) {
   );
 }
 
-type Priority = 'low' | 'normal' | 'high' | 'urgent';
+type Priority = 'low' | 'medium' | 'high' | 'urgent' | 'normal';
 
 function getPriorityVariant(priority: Priority): VariantProps<typeof badgeVariants>['variant'] {
   switch (priority) {
     case 'low':
       return 'secondary';
     case 'normal':
+    case 'medium':
       return 'default';
     case 'high':
       return 'warning';
