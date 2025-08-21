@@ -129,7 +129,9 @@ export default function ChatSession() {
                                     <View>
                                         {part.data}
                                     </View>
-                                ) : <></>
+                                ) : <>
+                                <Text>{part.type}</Text>
+                                </>
                             ))}
                         </Card>
 
