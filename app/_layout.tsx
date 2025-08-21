@@ -4,6 +4,8 @@ import { useColorScheme } from "@/lib/useColorScheme";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   DarkTheme,
   DefaultTheme,
@@ -11,7 +13,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import React, { useRef, useState } from "react";
-import { Platform } from "react-native";
+import { Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
@@ -20,8 +22,8 @@ import Toaster from "react-native-toast-message";
 import { PortalHost } from "@rn-primitives/portal";
 import { NAV_THEME } from "@/lib/constants";
 
-import { Stack } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { router, Stack } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -34,6 +36,7 @@ const DARK_THEME: Theme = {
 
 function AppLayout() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
+  const { height } = useWindowDimensions();
 
   const { userId } = useAuth()
   return (
@@ -41,9 +44,18 @@ function AppLayout() {
       <BottomSheetModalProvider>
         <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
         <SafeAreaView
-          edges={["top", "left", "right"]}
-          className={`flex-1  ${isDarkColorScheme ? "bg-gray-950" : "bg-gray-50"}`}
+          edges={["top", "bottom", "right"]}
+          className={`flex-1`}
+          style={{
+            height: height ,
+          }}
         >
+          <Stack.Screen
+              name="(auth)"
+              options={{
+                headerShown: false,
+              }}
+            />
           <Stack>
             <Stack.Screen
               name="(application)"
@@ -51,12 +63,7 @@ function AppLayout() {
                 headerShown: false,
               }}
             />
-            <Stack.Screen
-              name="(auth)"
-              options={{
-                headerShown: false,
-              }}
-            />
+            
           </Stack>
         </SafeAreaView>
       </BottomSheetModalProvider>
@@ -73,6 +80,7 @@ export default function RootLayout({
   const hasMounted = useRef(false);
   const { colorScheme, isDarkColorScheme } = useColorScheme();
   const [isColorSchemeLoaded, setIsColorSchemeLoaded] = useState(false);
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
 
   useIsomorphicLayoutEffect(() => {
     if (hasMounted.current) {
@@ -84,6 +92,26 @@ export default function RootLayout({
     }
     setIsColorSchemeLoaded(true);
     hasMounted.current = true;
+  }, []);
+
+  React.useEffect(() => {
+    const checkFirstLaunch = async () => {
+      try {
+        const hasLaunched = await AsyncStorage.getItem("hasLaunched");
+        if (hasLaunched === null) {
+          // First time launch
+          await AsyncStorage.setItem("hasLaunched", "true");
+          router.push("/onboarding");
+          setIsFirstLaunch(true);
+        } else {
+          setIsFirstLaunch(false);
+        }
+      } catch (e) {
+        console.error("Error checking first launch", e);
+      }
+    };
+
+    checkFirstLaunch();
   }, []);
 
   if (!isColorSchemeLoaded) {

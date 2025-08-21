@@ -6,6 +6,9 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  TextInput,
 } from "react-native";
 import { useSignIn, useOAuth, useAuth, useSSO } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
@@ -102,147 +105,162 @@ const SignInScreen = () => {
     }
   };
 
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState(false);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}
+      className="flex-1 bg-gray-900"
     >
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: contentInsets.top + 20,
-          paddingBottom: contentInsets.bottom + 20,
+          paddingTop: contentInsets.top,
+          paddingBottom: contentInsets.bottom + 24,
           paddingLeft: contentInsets.left,
           paddingRight: contentInsets.right,
-          height: "100%",
         }}
         showsVerticalScrollIndicator={false}
         className="flex-1"
       >
-        <View className="flex-1 px-6 justify-center h-full">
-          {/* Header */}
-          <View className="items-center my-12">
-            <View className="w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-4">
-              <Ionicons name="checkmark-done" size={32} color="white" />
-            </View>
-            <Text
-              className={`text-3xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
-            >
-              Welcome Back
-            </Text>
-            <Text
-              className={`text-center text-base ${isDark ? "text-gray-300" : "text-gray-600"}`}
-            >
-              Sign in to continue managing your goals and todos with AI
-              assistance
+        <SafeAreaView className="bg-gray-900">
+          <StatusBar barStyle="light-content" backgroundColor="#111827" />
+        </SafeAreaView>
+
+        {/* Back */}
+        <View className="flex-row items-center px-2 py-2">
+          <TouchableOpacity onPress={() => router.back()} className="px-4 py-2">
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        <View className="flex-1 px-6">
+          {/* Title */}
+          <View className="mt-2 mb-8">
+            <Text className="text-3xl font-extrabold text-white">Welcome Back! 👋</Text>
+            <Text className="text-base text-gray-400 mt-3 leading-6">
+              Sign in to access your goals, habits, and progress.
             </Text>
           </View>
 
-          {/* Sign In Form */}
+          {/* Form */}
           <Form {...form}>
-            <View className="space-y-6 mb-8">
-              {/* Email Field */}
+            {/* Email */}
+            <View className="mb-5">
+              <Text className="text-white text-base font-semibold mb-2">Email</Text>
               <FormField
                 control={form.control}
                 name="emailAddress"
                 render={({ field }) => (
-                  <FormInput
-                    label="Email Address"
-                    placeholder="Enter your email"
-                    description="Your registered email address"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    {...field}
-                  />
+                  <View className="bg-gray-800 rounded-xl px-4 py-4 flex-row items-center">
+                    <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
+                    <TextInput
+                      className="flex-1 text-white text-base ml-3"
+                      placeholder="Email"
+                      placeholderTextColor="#9CA3AF"
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                    />
+                  </View>
                 )}
               />
+            </View>
 
-              {/* Password Field */}
+            {/* Password */}
+            <View className="mb-4">
+              <Text className="text-white text-base font-semibold mb-2">Password</Text>
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormInput
-                    label="Password"
-                    placeholder="Enter your password"
-                    description="Your account password"
-                    secureTextEntry
-                    autoComplete="password"
-                    {...field}
-                  />
+                  <View className="dark:bg-gray-800 bg-gray-200 rounded-xl px-4 py-4 flex-row items-center">
+                    <Ionicons name="lock-closed-outline" size={20} color={isDark ? "#9CA3AF" : "#000"} />
+                    <TextInput
+                      className="flex-1 text-white text-base ml-3"
+                      placeholder="Password"
+                      placeholderTextColor="#9CA3AF"
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      secureTextEntry={!showPassword}
+                      autoComplete="password"
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                      <Ionicons
+                        name={showPassword ? "eye-outline" : "eye-off-outline"}
+                        size={20}
+                        color="#9CA3AF"
+                      />
+                    </TouchableOpacity>
+                  </View>
                 )}
               />
+            </View>
 
-              {/* Forgot Password Link */}
+            {/* Remember / Forgot */}
+            <View className="flex-row items-center justify-between mb-6">
               <TouchableOpacity
-                onPress={() => router.push("/forgot-password")}
-                className="self-end"
+                className="flex-row items-center"
+                onPress={() => setRememberMe(!rememberMe)}
               >
-                <Text className="text-blue-500 text-sm font-medium">
-                  Forgot Password?
-                </Text>
+                <View
+                  className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
+                    rememberMe ? "bg-orange-500 border-orange-500" : "border-gray-500"
+                  }`}
+                >
+                  {rememberMe && <Ionicons name="checkmark" size={12} color="white" />}
+                </View>
+                <Text className="text-gray-300 text-base">Remember me</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => router.push("/forgot-password")}>
+                <Text className="text-gray-200 text-base font-semibold">Forgot Password?</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Sign In Button */}
+            {/* Divider */}
+            <View className="flex-row items-center mb-6">
+              <View className="flex-1 h-px bg-gray-700" />
+              <Text className="text-gray-400 text-sm mx-4">or</Text>
+              <View className="flex-1 h-px bg-gray-700" />
+            </View>
+
+            {/* Social */}
+            <View className="gap-4 mb-4">
+              <Button
+                variant="outline"
+                onPress={onGoogleSignIn}
+                className="h-14 rounded-2xl bg-transparent border border-gray-700"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="logo-google" size={20} color="#4285F4" />
+                  <Text className="ml-2 text-gray-200 font-semibold">Continue with Google</Text>
+                </View>
+              </Button>
+            </View>
+
+            {/* Primary Sign In */}
             <Button
               onPress={form.handleSubmit(onSubmit)}
               disabled={form.formState.isSubmitting}
-              className="w-full mb-6"
+              className="w-full h-14 rounded-full bg-[#FF7A33] mt-2"
             >
               <Text className="text-white text-center text-base font-semibold">
-                {form.formState.isSubmitting ? "Signing In..." : "Sign In"}
+                {form.formState.isSubmitting ? "Signing In..." : "Sign in"}
               </Text>
             </Button>
+
+            {/* Sign up link */}
+            <View className="flex-row justify-center items-center mt-6">
+              <Text className="text-gray-400 text-base">Don't have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/sign-up")}>
+                <Text className="text-orange-500 text-base">Sign up</Text>
+              </TouchableOpacity>
+            </View>
           </Form>
-
-          {/* Divider */}
-          <View className="flex-row items-center mb-6">
-            <View
-              className={`flex-1 h-px ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
-            />
-            <Text
-              className={`px-4 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
-            >
-              Or continue with
-            </Text>
-            <View
-              className={`flex-1 h-px ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
-            />
-          </View>
-
-          {/* Social Sign In Buttons */}
-          <View className="flex-row space-x-4 mb-8">
-            {/* Google Sign In */}
-            <Button
-              variant="outline"
-              onPress={onGoogleSignIn}
-              className="flex-1 flex-row items-center justify-center py-4"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="logo-google" size={20} color="#4285F4" />
-                <Text className="ml-2 text-gray-700 font-medium">Google</Text>
-              </View>
-            </Button>
-          </View>
-
-          {/* Sign Up Link */}
-          <View className="flex-row justify-center items-center mt-auto">
-            <Text
-              className={`text-base ${isDark ? "text-gray-300" : "text-gray-600"}`}
-            >
-              Don't have an account?
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/sign-up")}
-              className="ml-1"
-            >
-              <Text className="text-blue-500 text-base font-semibold">
-                Sign Up
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

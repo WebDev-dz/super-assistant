@@ -1,166 +1,108 @@
-import React from "react";
+import React, { useState } from 'react';
 import {
   View,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  Text,
+  TextInput,
   TouchableOpacity,
-} from "react-native";
-import { useSignIn } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as z from "zod";
-import { Button } from "~/components/ui/button";
-import { Form, FormField, FormInput, FormItem } from "~/components/ui/form";
-import { Text } from "~/components/ui/text";
-import { useColorScheme } from "@/lib/useColorScheme";
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useSignIn } from '@clerk/clerk-expo';
 
-// Form validation schema
-const forgotPasswordSchema = z.object({
-  emailAddress: z
-    
-    .email({ message: "Please enter a valid email address." }),
-});
-
-const ForgotPasswordScreen = () => {
+export default function TaskifyForgotPassword() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const { isLoaded, signIn } = useSignIn();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === "dark";
 
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: {
-      emailAddress: "",
-    },
-  });
-
-  const contentInsets = {
-    top: insets.top,
-    bottom: insets.bottom,
-    left: 12,
-    right: 12,
-  };
-
-  async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
-    if (!isLoaded) return;
-
+  const handleSendOTP = async () => {
+    if (!isLoaded || !email) return;
     try {
-      // Create a password reset request
-      await signIn.create({
-        strategy: "reset_password_email_code",
-        identifier: values.emailAddress,
+      setLoading(true);
+      // Bind identifier to signIn resource
+      await signIn.create({ identifier: email });
+
+      // Extract the emailAddressId for the reset code factor
+      const firstFactor: any = signIn.supportedFirstFactors?.find(
+        (f: any) => f.strategy === 'reset_password_email_code'
+      );
+      const emailAddressId: string | undefined = firstFactor?.emailAddressId;
+
+      await signIn.prepareFirstFactor({
+        strategy: 'reset_password_email_code',
+        // @ts-expect-error: Clerk types require emailAddressId; we obtain it from supportedFirstFactors
+        emailAddressId,
       });
 
-      Alert.alert(
-        "Check your email",
-        "A password reset code has been sent to your email address.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.push({
-              pathname: "/reset-password",
-              params: { email: values.emailAddress }
-            }),
-          },
-        ]
-      );
+      router.push({ pathname: '/(auth)/enter-otp', params: { email } });
     } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err.errors?.[0]?.message || "An error occurred while sending the reset email."
-      );
+      alert(err?.errors?.[0]?.message || 'Failed to send reset code');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className={`flex-1 ${isDark ? "bg-gray-900" : "bg-white"}`}
-    >
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingTop: contentInsets.top + 20,
-          paddingBottom: contentInsets.bottom + 20,
-          paddingLeft: contentInsets.left,
-          paddingRight: contentInsets.right,
-          height: "100%",
-        }}
-        showsVerticalScrollIndicator={false}
-        className="flex-1"
-      >
-        <View className="flex-1 px-6 justify-center h-full">
-          {/* Header */}
-          <View className="items-center my-12">
-            <View className="w-20 h-20 bg-blue-500 rounded-full items-center justify-center mb-4">
-              <Ionicons name="lock-closed" size={32} color="white" />
-            </View>
-            <Text
-              className={`text-3xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
-            >
-              Reset Password
+    <SafeAreaView className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
+      <View className="flex-row items-center px-6 py-4">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <View className="flex-1 px-6">
+        {/* Title */}
+        <View className="mt-8 mb-8">
+          <View className="flex-row items-center">
+            <Text className="text-black text-3xl font-bold">
+              Forgot Your Password? 
             </Text>
-            <Text
-              className={`text-center text-base ${isDark ? "text-gray-300" : "text-gray-600"}`}
-            >
-              Enter your email address to receive a password reset code
-            </Text>
+            <Text className="text-yellow-500 text-3xl ml-2">🔑</Text>
           </View>
+          <Text className="text-gray-600 text-base mt-4 leading-6">
+            No worries! Enter your registered email below.{'\n'}
+            We'll send you a one-time password (OTP) to{'\n'}
+            reset your password.
+          </Text>
+        </View>
 
-          {/* Forgot Password Form */}
-          <Form {...form}>
-            <View className="space-y-6 mb-8">
-              {/* Email Field */}
-              <FormField
-                control={form.control}
-                name="emailAddress"
-                render={({ field }) => (
-                  <FormInput
-                    label="Email Address"
-                    placeholder="Enter your email"
-                    description="Your registered email address"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    {...field}
-                  />
-                )}
-              />
-            </View>
-
-            {/* Submit Button */}
-            <Button
-              onPress={form.handleSubmit(onSubmit)}
-              disabled={form.formState.isSubmitting}
-              className="w-full mb-6"
-            >
-              <Text className="text-white text-center text-base font-semibold">
-                {form.formState.isSubmitting ? "Sending..." : "Send Reset Code"}
-              </Text>
-            </Button>
-          </Form>
-
-          {/* Back to Sign In Link */}
-          <View className="flex-row justify-center items-center mt-auto">
-            <TouchableOpacity
-              onPress={() => router.push("/sign-in")}
-              className="ml-1"
-            >
-              <Text className="text-blue-500 text-base font-semibold">
-                Back to Sign In
-              </Text>
-            </TouchableOpacity>
+        {/* Email Input */}
+        <View className="mb-8">
+          <Text className="text-black text-base font-medium mb-3">
+            Your Registered Email
+          </Text>
+          <View className="bg-gray-100 rounded-lg px-4 py-4 flex-row items-center">
+            <Ionicons name="mail-outline" size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 text-black text-base ml-3"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+            />
           </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-};
 
-export default ForgotPasswordScreen;
+        {/* Spacer to push button to bottom */}
+        <View className="flex-1" />
+
+        {/* Send OTP Button */}
+        <TouchableOpacity 
+          className={`rounded-xl py-4 items-center justify-center mb-8 ${email ? 'bg-orange-500' : 'bg-gray-300'}`}
+          onPress={handleSendOTP}
+          disabled={!email || loading}
+        >
+          <Text className="text-white text-base font-semibold">
+            {loading ? 'Sending...' : 'Send OTP Code'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}

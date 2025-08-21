@@ -7,6 +7,9 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  TextInput,
 } from 'react-native';
 import { useSignUp, useOAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
@@ -60,7 +63,7 @@ const SignUpScreen = () => {
   const { startOAuthFlow: googleAuth } = useOAuth({ strategy: 'oauth_google' });
   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: 'oauth_apple' });
   const [showPassword, setShowPassword] = React.useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [agreeToTerms, setAgreeToTerms] = React.useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -73,11 +76,8 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const form = useForm<z.infer<typeof signUpFormSchema>>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
       emailAddress: '',
       password: '',
-      confirmPassword: '',
     },
   });
 
@@ -241,212 +241,162 @@ const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   }
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+      className="flex-1 bg-gray-900"
     >
-      <ScrollView 
-        contentContainerStyle={{ 
+      <ScrollView
+        contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: contentInsets.top + 20,
+          paddingTop: contentInsets.top,
           paddingBottom: contentInsets.bottom + 20,
-          paddingLeft: contentInsets.left,
-          paddingRight: contentInsets.right,
         }}
         showsVerticalScrollIndicator={false}
         className="flex-1"
       >
+        <SafeAreaView className="bg-gray-900">
+          <StatusBar barStyle="light-content" backgroundColor="#111827" />
+        </SafeAreaView>
+
+        {/* Header */}
+        <View className="flex-row items-center px-6 py-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Content */}
         <View className="flex-1 px-6">
-          {/* Header */}
-          <View className="items-center mb-12">
-            <View className="w-20 h-20 bg-green-500 rounded-full items-center justify-center mb-4">
-              <Ionicons name="person-add-outline" size={32} color="white" />
+          {/* Title */}
+          <View className="mt-8 mb-12">
+            <View className="flex-row items-center">
+              <Text className="text-white text-3xl font-bold">Join Taskify Today</Text>
+              <Text className="text-yellow-400 text-3xl ml-2">✨</Text>
             </View>
-            <Text className={`text-3xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Create Account
-            </Text>
-            <Text className={`text-center text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              Join Super Assistant and start managing your goals and todos with AI
+            <Text className="text-gray-400 text-base mt-3 leading-5">
+              Create your account and unlock a world of productivity.
             </Text>
           </View>
 
-          {/* Social Sign Up Buttons */}
-          <View className="flex-row space-x-4 mb-8">
-            {/* Google Sign Up */}
-            <Button
-              variant="outline"
-              onPress={onGoogleSignUp}
-              className="flex-1 flex-row items-center justify-center py-4"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="logo-google" size={20} color="#4285F4" />
-                <Text className={`ml-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Google</Text>
-              </View>
-            </Button>
-
-            {/* Apple Sign Up (iOS only) */}
-            {Platform.OS === 'ios' && (
-              <Button
-                variant="outline"
-                onPress={onAppleSignUp}
-                className="flex-1 flex-row items-center justify-center py-4 bg-black border-black"
-              >
-                <View className="flex-row items-center">
-                  <Ionicons name="logo-apple" size={20} color="white" />
-                  <Text className="ml-2 text-white font-medium">Apple</Text>
-                </View>
-              </Button>
-            )}
-          </View>
-
-          {/* Divider */}
-          <View className="flex-row items-center mb-8">
-            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
-            <Text className={`px-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Or create with email</Text>
-            <View className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
-          </View>
-
-          {/* Sign Up Form */}
+          {/* Email Input */}
           <Form {...form}>
-            <View className="space-y-6 mb-8">
-              {/* Name Fields */}
-              <View className="flex-row space-x-4">
-                <View className="flex-1">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormInput
-                        label="First Name"
-                        placeholder="John"
-                        description="Your first name"
-                        autoCapitalize="words"
-                        autoComplete="given-name"
-                        {...field}
-                      />
-                    )}
-                  />
-                </View>
-                <View className="flex-1">
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormInput
-                        label="Last Name"
-                        placeholder="Doe"
-                        description="Your last name"
-                        autoCapitalize="words"
-                        autoComplete="family-name"
-                        {...field}
-                      />
-                    )}
-                  />
-                </View>
-              </View>
-
-              {/* Email Field */}
+            <View className="mb-6">
+              <Text className="text-white text-base font-medium mb-3">Email</Text>
               <FormField
                 control={form.control}
                 name="emailAddress"
                 render={({ field }) => (
-                  <FormInput
-                    label="Email Address"
-                    placeholder="john.doe@example.com"
-                    description="Your email address"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    {...field}
-                  />
-                )}
-              />
-
-              {/* Password Fields */}
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormInput
-                    label="Password"
-                    placeholder="Create a strong password"
-                    description="At least 8 characters with uppercase, lowercase, and number"
-                    secureTextEntry
-                    autoComplete="new-password"
-                    
-                    {...field}
-                  />
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormInput
-                    label="Confirm Password"
-                    placeholder="Confirm your password"
-                    description="Re-enter your password"
-                    secureTextEntry
-                    autoComplete="new-password"
-                    {...field}
-                  />
+                  <View className="bg-gray-800 rounded-lg px-4 py-4 flex-row items-center">
+                    <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
+                    <TextInput
+                      className="flex-1 text-white text-base ml-3"
+                      placeholder="Email"
+                      placeholderTextColor="#9CA3AF"
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                    />
+                  </View>
                 )}
               />
             </View>
 
-            {/* Sign Up Button */}
-            <Button
-              onPress={form.handleSubmit(onSubmit)}
-              disabled={form.formState.isSubmitting}
-              className="w-full mb-6"
-            >
-              <Text className="text-white text-center text-base font-semibold">
-                {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
-              </Text>
-            </Button>
-          </Form>
+            {/* Password Input */}
+            <View className="mb-6">
+              <Text className="text-white text-base font-medium mb-3">Password</Text>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <View className="bg-gray-800 rounded-lg px-4 py-4 flex-row items-center">
+                    <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
+                    <TextInput
+                      className="flex-1 text-white text-base ml-3"
+                      placeholder="Password"
+                      placeholderTextColor="#9CA3AF"
+                      value={field.value}
+                      onChangeText={field.onChange}
+                      secureTextEntry={!showPassword}
+                      autoComplete="new-password"
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                      <Ionicons
+                        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                        size={20}
+                        color="#9CA3AF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            </View>
 
-          {/* Terms and Privacy */}
-          <View className="mb-6">
-            <Text className={`text-sm text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              By creating an account, you agree to our{' '}
-              <Text className="text-blue-500">Terms of Service</Text> and{' '}
-              <Text className="text-blue-500">Privacy Policy</Text>
-            </Text>
-          </View>
-
-          {/* Form Actions */}
-          <View className="mb-6">
-            <Button
-              variant="ghost"
-              onPress={() => form.clearErrors()}
-              className="mb-2"
+            {/* Terms and Conditions */}
+            <TouchableOpacity
+              className="flex-row items-center mb-6"
+              onPress={() => setAgreeToTerms(!agreeToTerms)}
             >
-              <Text>Clear errors</Text>
-            </Button>
-            <Button
-              variant="ghost"
-              onPress={() => form.reset()}
-            >
-              <Text>Clear form</Text>
-            </Button>
-          </View>
-
-          {/* Sign In Link */}
-          <View className="flex-row justify-center items-center mt-auto">
-            <Text className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              Already have an account? 
-            </Text>
-            <TouchableOpacity 
-              onPress={() => router.push('/(auth)/sign-in')}
-              className="ml-1"
-            >
-              <Text className="text-blue-500 text-base font-semibold">
-                Sign In
+              <View
+                className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
+                  agreeToTerms ? 'bg-orange-500 border-orange-500' : 'border-gray-500'
+                }`}
+              >
+                {agreeToTerms && <Ionicons name="checkmark" size={12} color="white" />}
+              </View>
+              <Text className="text-gray-300 text-base">
+                I agree to Taskify <Text className="text-orange-500">Terms & Conditions</Text>.
               </Text>
             </TouchableOpacity>
-          </View>
+
+            {/* Sign In Link */}
+            <View className="flex-row justify-center mb-8">
+              <Text className="text-gray-400 text-base">Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
+                <Text className="text-orange-500 text-base">Sign in</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Divider */}
+            <View className="flex-row items-center mb-8">
+              <View className="flex-1 h-px bg-gray-700" />
+              <Text className="text-gray-400 text-base mx-4">or</Text>
+              <View className="flex-1 h-px bg-gray-700" />
+            </View>
+
+            {/* Social Sign Up Buttons */}
+            <View className="gap-4 mb-8">
+              <TouchableOpacity
+                className="bg-gray-800 rounded-xl py-4 flex-row items-center justify-center"
+                onPress={onGoogleSignUp}
+              >
+                <Text className="text-4xl mr-3">G</Text>
+                <Text className="text-white text-base font-medium">Continue with Google</Text>
+              </TouchableOpacity>
+
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  className="bg-gray-800 rounded-xl py-4 flex-row items-center justify-center"
+                  onPress={onAppleSignUp}
+                >
+                  <Ionicons name="logo-apple" size={20} color="white" />
+                  <Text className="text-white text-base font-medium ml-3">Continue with Apple</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Sign Up Button */}
+            <TouchableOpacity
+              className={`rounded-xl py-4 items-center justify-center ${agreeToTerms ? 'bg-orange-500' : 'bg-gray-700'}`}
+              disabled={!agreeToTerms || form.formState.isSubmitting}
+              onPress={form.handleSubmit(onSubmit)}
+            >
+              <Text className="text-white text-base font-semibold">
+                {form.formState.isSubmitting ? 'Creating Account...' : 'Sign up'}
+              </Text>
+            </TouchableOpacity>
+          </Form>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
