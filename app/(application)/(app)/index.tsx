@@ -409,7 +409,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} className={`flex-1 bg-red-500 `}>
+    <SafeAreaView  edges={[]} className={`flex-1 `}>
       <FlatList
         data={[{ id: 'header' }]} // Just one item for the header
         keyExtractor={(item) => item.id}
