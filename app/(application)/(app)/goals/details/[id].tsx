@@ -1,147 +1,96 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
-import { Progress } from '~/components/ui/progress';
 import { Badge } from '~/components/ui/badge';
 import { Card } from '~/components/ui/card';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
-// Enhanced categories with icons and colors (same as form)
-const categories = [
-  { 
-    value: 'personal', 
-    label: 'Personal', 
-    icon: 'person-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#8B5CF6',
-    bgColor: 'bg-purple-100',
-    textColor: 'text-purple-600'
-  },
-  { 
-    value: 'career', 
-    label: 'Career', 
-    icon: 'briefcase-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#3B82F6',
-    bgColor: 'bg-blue-100',
-    textColor: 'text-blue-600'
-  },
-  { 
-    value: 'health', 
-    label: 'Health & Fitness', 
-    icon: 'fitness-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#10B981',
-    bgColor: 'bg-green-100',
-    textColor: 'text-green-600'
-  },
-  { 
-    value: 'education', 
-    label: 'Education', 
-    icon: 'school-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#F59E0B',
-    bgColor: 'bg-amber-100',
-    textColor: 'text-amber-600'
-  },
-  { 
-    value: 'finance', 
-    label: 'Finance', 
-    icon: 'card-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#EF4444',
-    bgColor: 'bg-red-100',
-    textColor: 'text-red-600'
-  },
-  { 
-    value: 'business', 
-    label: 'Business', 
-    icon: 'business-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#6366F1',
-    bgColor: 'bg-indigo-100',
-    textColor: 'text-indigo-600'
-  },
-  { 
-    value: 'relationships', 
-    label: 'Relationships', 
-    icon: 'heart-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#EC4899',
-    bgColor: 'bg-pink-100',
-    textColor: 'text-pink-600'
-  },
-  { 
-    value: 'travel', 
-    label: 'Travel', 
-    icon: 'airplane-outline' as keyof typeof Ionicons.glyphMap,
-    color: '#14B8A6',
-    bgColor: 'bg-teal-100',
-    textColor: 'text-teal-600'
-  },
-];
-
-// Sample goal data
-const sampleGoal = {
+// Sample meditation goal data
+const sampleMeditationGoal = {
   id: '1',
-  title: 'Complete Full Stack Web Development Bootcamp',
-  description: 'Master modern web development technologies including React, Node.js, and databases. Build a portfolio of projects and prepare for a career transition into tech.',
-  category: 'education',
-  status: 'in_progress',
-  priority: 'high',
-  startDate: '2024-01-15',
-  targetEndDate: '2024-06-30',
-  budget: 3500,
-  estimatedTotalHours: 400,
-  currentProgress: 65,
-  hoursCompleted: 260,
-  createdAt: '2024-01-10',
-  updatedAt: '2024-03-15'
+  title: 'Daily Meditation',
+  category: 'health',
+  startDate: '2024-01-01',
+  targetEndDate: '2025-12-25',
+  targetTime: '08:00 AM',
+  description: 'Develop a consistent meditation practice for mental clarity and stress reduction',
+  habits: [
+    {
+      id: '1',
+      title: 'Morning Meditation Routine',
+      days: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+      time: '07:00 AM',
+      reminder: true
+    },
+    {
+      id: '2',
+      title: 'Evening Wind-Down',
+      days: ['M', 'T', 'W', 'T', 'F', 'S'],
+      time: '16:00 PM',
+      reminder: true
+    },
+    {
+      id: '3',
+      title: 'Breathing Exercises',
+      days: ['M', 'T', 'W', 'T', 'F', 'S'],
+      time: 'No reminder',
+      reminder: false
+    },
+    {
+      id: '4',
+      title: 'Body Scan Meditation',
+      days: ['M', 'T', 'W', 'T', 'F', 'S'],
+      time: 'No reminder',
+      reminder: false
+    }
+  ],
+  tasks: [
+    {
+      id: '1',
+      title: 'Set Daily Meditation Time',
+      dueDate: 'Today, Dec 22, 2024',
+      time: '10:00 AM',
+      completed: false
+    },
+    {
+      id: '2',
+      title: 'Create Meditation Space',
+      dueDate: 'Jan 08, 2025',
+      time: '10:00 AM',
+      completed: false
+    },
+    {
+      id: '3',
+      title: 'Experiment with Techniques',
+      dueDate: 'Jan 15, 2025',
+      time: '08:00 AM',
+      completed: false
+    },
+    {
+      id: '4',
+      title: 'Attend Meditation Classes',
+      dueDate: 'Jan 20, 2025',
+      time: '10:00 AM',
+      completed: false
+    }
+  ],
+  notes: [
+    'Be patient: Learning meditation takes time and practice. Don\'t get discouraged if you find it difficult to quiet your mind at first.',
+    'Focus on the present moment: Don\'t worry about the past or future during meditation.',
+    'Embrace distractions: When your mind wanders, gently bring it back to your breath without judgment.'
+  ]
 };
 
-// Status configurations
-const statusConfig = {
-  not_started: { color: 'bg-gray-100 text-gray-700', icon: 'pause-circle-outline' },
-  in_progress: { color: 'bg-blue-100 text-blue-700', icon: 'play-circle-outline' },
-  on_hold: { color: 'bg-yellow-100 text-yellow-700', icon: 'time-outline' },
-  completed: { color: 'bg-green-100 text-green-700', icon: 'checkmark-circle-outline' },
-  cancelled: { color: 'bg-red-100 text-red-700', icon: 'close-circle-outline' }
-};
-
-// Priority configurations
-const priorityConfig = {
-  low: { color: 'bg-gray-100 text-gray-700', icon: 'arrow-down' },
-  medium: { color: 'bg-blue-100 text-blue-700', icon: 'remove' },
-  high: { color: 'bg-orange-100 text-orange-700', icon: 'arrow-up' },
-  urgent: { color: 'bg-red-100 text-red-700', icon: 'warning' }
-};
-
-interface GoalDetailsScreenProps {
-  goalId?: string;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onBack?: () => void;
-}
-
-export default function GoalDetailsScreen({ 
-  goalId, 
-  onEdit, 
-  onDelete, 
-  onBack 
-}: GoalDetailsScreenProps) {
-  const [goal] = useState(sampleGoal);
-  const [showActions, setShowActions] = useState(false);
-  
-  const category = categories.find(cat => cat.value === goal.category);
-  const statusInfo = statusConfig[goal.status as keyof typeof statusConfig];
-  const priorityInfo = priorityConfig[goal.priority as keyof typeof priorityConfig];
-
-  const  {colorScheme}  = useColorScheme();
+export default function GoalDetailsScreen() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const [goal] = useState(sampleMeditationGoal);
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const calculateDaysRemaining = () => {
     const endDate = new Date(goal.targetEndDate);
@@ -151,225 +100,214 @@ export default function GoalDetailsScreen({
     return diffDays;
   };
 
-  const handleDeleteGoal = () => {
-    Alert.alert(
-      'Delete Goal',
-      'Are you sure you want to delete this goal? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            onDelete?.();
-          }
-        }
-      ]
-    );
-  };
-
   const daysRemaining = calculateDaysRemaining();
 
+  const handleBack = () => {
+    router.back();
+  };
+
+  const handleEdit = () => {
+    // Navigate to edit page or open edit modal
+    Alert.alert('Edit', 'Edit functionality would go here');
+  };
+
+  const renderDayCircle = (day: string, isActive: boolean, index: number) => (
+    <View 
+      key={index}
+      className={`w-8 h-8 rounded-full items-center justify-center mr-1 ${
+        isActive ? 'bg-orange-500' : 'bg-white border border-orange-500'
+      }`}
+    >
+      <Text className={`text-xs font-medium ${
+        isActive ? 'text-white' : 'text-orange-500'
+      }`}>
+        {day}
+      </Text>
+    </View>
+  );
+
+  const renderHabitCard = (habit: any) => (
+    <View key={habit.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100">
+      <Text className="text-base font-medium text-gray-900 mb-2">{habit.title}</Text>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row">
+          {habit.days.map((day: string, index: number) => 
+            renderDayCircle(day, habit.days.length === 7 || index < 6, index)
+          )}
+        </View>
+        <View className="flex-row items-center">
+          <Ionicons name="time-outline" size={16} color="#6B7280" />
+          <Text className="ml-1 text-sm text-gray-600">{habit.time}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderTaskCard = (task: any) => (
+    <View key={task.id} className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100">
+      <View className="flex-row items-start">
+        <View className="w-1 h-full bg-blue-500 rounded-full mr-3 mt-1" />
+        <View className="flex-1">
+          <Text className="text-base font-medium text-gray-900 mb-2">{task.title}</Text>
+          <View className="flex-row items-center">
+            <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+            <Text className="ml-1 text-sm text-gray-600">{task.dueDate}</Text>
+            <View className="ml-4 flex-row items-center">
+              <Ionicons name="time-outline" size={16} color="#6B7280" />
+              <Text className="ml-1 text-sm text-gray-600">{task.time}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} className={`flex-1  ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
+    <SafeAreaView edges={['top', 'left', 'right']} className={`flex-1 ${isDark ? 'bg-gray-950' : 'bg-gray-50'}`}>
       {/* Header */}
       <View className="bg-white border-b border-gray-200 px-4 py-4 flex-row items-center justify-between">
         <TouchableOpacity 
-          onPress={onBack}
-          className="p-2 -ml-2"
+          onPress={handleBack}
+          className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
         >
-          <Ionicons name="arrow-back" size={24} color="#374151" />
+          <Ionicons name="arrow-back" size={20} color="#374151" />
         </TouchableOpacity>
         
-        <Text className="text-lg font-semibold text-gray-900 flex-1 text-center mr-10">
-          Goal Details
+        <Text className="text-xl font-bold text-gray-900 flex-1 text-center">
+          Self-made Goals
         </Text>
         
-        <TouchableOpacity 
-          onPress={() => setShowActions(!showActions)}
-          className="p-2 -mr-2"
-        >
-          <Ionicons name="ellipsis-vertical" size={24} color="#374151" />
-        </TouchableOpacity>
+        <View className="w-10" />
       </View>
 
-      {/* Action Menu */}
-      {showActions && (
-        <View className="absolute top-20 right-4 bg-white rounded-lg shadow-lg border border-gray-200 z-10 min-w-[120px]">
-          <TouchableOpacity 
-            onPress={() => {
-              setShowActions(false);
-              onEdit?.();
-            }}
-            className="flex-row items-center px-4 py-3 border-b border-gray-100"
-          >
-            <Ionicons name="create-outline" size={16} color="#6B7280" />
-            <Text className="ml-2 text-gray-700">Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => {
-              setShowActions(false);
-              handleDeleteGoal();
-            }}
-            className="flex-row items-center px-4 py-3"
-          >
-            <Ionicons name="trash-outline" size={16} color="#EF4444" />
-            <Text className="ml-2 text-red-600">Delete</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Main Goal Info */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-6 shadow-sm border border-gray-100">
-          {/* Category Badge */}
-          {category && (
-            <View className="flex-row items-center mb-4">
-              <View className={`w-8 h-8 rounded-full ${category.bgColor} items-center justify-center mr-3`}>
-                <Ionicons name={category.icon} size={16} color={category.color} />
-              </View>
-              <Text className={`text-sm font-medium ${category.textColor}`}>
-                {category.label}
-              </Text>
-            </View>
-          )}
-
-          {/* Title */}
-          <Text className="text-2xl font-bold text-gray-900 mb-3 leading-tight">
-            {goal.title}
-          </Text>
-
-          {/* Status and Priority Badges */}
-          <View className="flex-row gap-2 mb-4">
-            <View className={`px-3 py-1 rounded-full ${statusInfo.color} flex-row items-center`}>
-              <Ionicons name={statusInfo.icon as keyof typeof Ionicons.glyphMap} size={12} />
-              <Text className="ml-1 text-xs font-medium capitalize">
-                {goal.status.replace('_', ' ')}
-              </Text>
-            </View>
-            <View className={`px-3 py-1 rounded-full ${priorityInfo.color} flex-row items-center`}>
-              <Ionicons name={priorityInfo.icon as keyof typeof Ionicons.glyphMap} size={12} />
-              <Text className="ml-1 text-xs font-medium capitalize">
-                {goal.priority} Priority
-              </Text>
-            </View>
-          </View>
-
-          {/* Description */}
-          <Text className="text-gray-600 leading-relaxed">
-            {goal.description}
-          </Text>
-        </View>
-
-        {/* Progress Section */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-6 shadow-sm border border-gray-100">
-          <Text className="text-lg font-semibold text-gray-900 mb-4">Progress Overview</Text>
-          
-          {/* Progress Bar */}
-          <View className="mb-4">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-sm font-medium text-gray-700">Completion</Text>
-              <Text className="text-sm font-semibold text-purple-600">{goal.currentProgress}%</Text>
-            </View>
-            <View className="h-2 bg-gray-200 rounded-full">
-              <View 
-                className="h-2 bg-purple-600 rounded-full"
-                style={{ width: `${goal.currentProgress}%` }}
-              />
-            </View>
-          </View>
-
-          {/* Progress Stats */}
-          <View className="flex-row justify-between">
-            <View className="flex-1">
-              <Text className="text-2xl font-bold text-gray-900">{goal.hoursCompleted}</Text>
-              <Text className="text-sm text-gray-600">Hours Completed</Text>
-            </View>
-            <View className="flex-1 items-center">
-              <Text className="text-2xl font-bold text-gray-900">{goal.estimatedTotalHours - goal.hoursCompleted}</Text>
-              <Text className="text-sm text-gray-600">Hours Remaining</Text>
-            </View>
-            <View className="flex-1 items-end">
-              <Text className={`text-2xl font-bold ${daysRemaining > 0 ? 'text-gray-900' : 'text-red-600'}`}>
-                {Math.abs(daysRemaining)}
-              </Text>
-              <Text className="text-sm text-gray-600">
-                Days {daysRemaining > 0 ? 'Remaining' : 'Overdue'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Timeline Section */}
-        <View className="bg-white mx-4 mt-4 rounded-xl p-6 shadow-sm border border-gray-100">
-          <Text className="text-lg font-semibold text-gray-900 mb-4">Timeline</Text>
-          
-          <View className="space-y-4">
-            <View className="flex-row items-center">
-              <View className="w-3 h-3 bg-green-500 rounded-full mr-4" />
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-gray-900">Start Date</Text>
-                <Text className="text-sm text-gray-600">{formatDate(goal.startDate)}</Text>
-              </View>
+        {/* Illustrative Banner */}
+        <View className="mx-4 mt-4 rounded-2xl overflow-hidden relative">
+          <View className="w-full h-64 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-400 relative">
+            {/* Abstract background elements */}
+            <View className="absolute top-4 right-4 w-20 h-20 bg-yellow-300 rounded-full opacity-80" />
+            <View className="absolute top-16 left-8 w-16 h-16 bg-pink-300 rounded-full opacity-60" />
+            <View className="absolute top-32 right-16 w-12 h-12 bg-purple-300 rounded-full opacity-70" />
+            
+            {/* Mountain range */}
+            <View className="absolute bottom-0 left-0 right-0 h-16">
+              <View className="absolute bottom-0 left-0 w-32 h-16 bg-pink-200 rounded-t-full" />
+              <View className="absolute bottom-0 right-0 w-24 h-12 bg-white rounded-t-full" />
             </View>
             
-            <View className="flex-row items-center">
-              <View className="w-3 h-3 bg-purple-500 rounded-full mr-4" />
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-gray-900">Target End Date</Text>
-                <Text className="text-sm text-gray-600">{formatDate(goal.targetEndDate)}</Text>
-              </View>
+            {/* Meditation person silhouette */}
+            <View className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+              <View className="w-16 h-20 bg-gray-800 rounded-full" />
+              <View className="w-12 h-16 bg-white rounded-full mx-auto mt-2" />
+              <View className="w-8 h-12 bg-orange-500 rounded-full mx-auto mt-2" />
             </View>
+            
+            {/* Stars */}
+            <View className="absolute top-8 left-16 w-2 h-2 bg-white rounded-full" />
+            <View className="absolute top-12 right-20 w-1 h-1 bg-white rounded-full" />
+            <View className="absolute top-20 left-24 w-1.5 h-1.5 bg-white rounded-full" />
+            
+            {/* Image change button */}
+            <TouchableOpacity className="absolute bottom-4 right-4 w-12 h-12 bg-orange-500 rounded-full items-center justify-center">
+              <Ionicons name="image-outline" size={20} color="white" />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Budget Section */}
-        {goal.budget && (
-          <View className="bg-white mx-4 mt-4 rounded-xl p-6 shadow-sm border border-gray-100">
-            <Text className="text-lg font-semibold text-gray-900 mb-4">Budget</Text>
-            
-            <View className="flex-row items-center">
-              <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
-                <Ionicons name="wallet-outline" size={24} color="#10B981" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-2xl font-bold text-gray-900">${goal.budget.toLocaleString()}</Text>
-                <Text className="text-sm text-gray-600">Allocated Budget</Text>
-              </View>
+        {/* Daily Meditation Section */}
+        <View className="mx-4 mt-6 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-lg font-bold text-gray-900">Daily Meditation</Text>
+            <TouchableOpacity onPress={handleEdit}>
+              <Ionicons name="create-outline" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          
+          <View className="flex-row items-center mb-2">
+            <Badge className="bg-green-100 border-green-200">
+              <Text className="text-green-700 text-xs font-medium">Health</Text>
+            </Badge>
+            <View className="flex-row items-center ml-3">
+              <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+              <Text className="ml-1 text-sm text-gray-600">D-{daysRemaining} days</Text>
             </View>
           </View>
-        )}
+          
+          <View className="flex-row items-center">
+            <Ionicons name="time-outline" size={16} color="#6B7280" />
+            <Text className="ml-1 text-sm text-gray-600">
+              {goal.targetEndDate} - {goal.targetTime}
+            </Text>
+          </View>
+        </View>
 
-        {/* Actions */}
-        <View className="mx-4 mt-6 mb-8 gap-3">
-          <Button 
-            onPress={onEdit}
-            className="bg-purple-600 py-4 rounded-xl"
-          >
-            <Text className="text-white font-semibold text-center">Edit Goal</Text>
-          </Button>
+        {/* Habits Section */}
+        <View className="mx-4 mt-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <View className="flex-row items-center mb-4">
+            <Text className="text-lg font-bold text-gray-900">Habit ({goal.habits.length})</Text>
+            <TouchableOpacity className="ml-2">
+              <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          
+          {goal.habits.map(renderHabitCard)}
           
           <Button 
             variant="outline"
-            onPress={() => {
-              // Add to calendar logic here
-              Alert.alert('Success', 'Goal milestones added to your calendar!');
-            }}
-            className="border-purple-600 py-4 rounded-xl"
+            className="border-orange-500 py-3 rounded-lg mt-2"
           >
-            <Text className="text-purple-600 font-semibold text-center">Add to Calendar</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="add" size={20} color="#F97316" />
+              <Text className="ml-2 text-orange-500 font-medium">Add Habit</Text>
+            </View>
+          </Button>
+        </View>
+
+        {/* Tasks Section */}
+        <View className="mx-4 mt-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <View className="flex-row items-center mb-4">
+            <Text className="text-lg font-bold text-gray-900">Task ({goal.tasks.length})</Text>
+            <TouchableOpacity className="ml-2">
+              <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          
+          {goal.tasks.map(renderTaskCard)}
+          
+          <Button 
+            variant="outline"
+            className="border-orange-500 py-3 rounded-lg mt-2"
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="add" size={20} color="#F97316" />
+              <Text className="ml-2 text-orange-500 font-medium">Add Task</Text>
+            </View>
+          </Button>
+        </View>
+
+        {/* Notes Section */}
+        <View className="mx-4 mt-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <Text className="text-lg font-bold text-gray-900 mb-4">Note</Text>
+          
+          <View className="bg-white rounded-lg p-4 border border-gray-100">
+            {goal.notes.map((note, index) => (
+              <View key={index} className="flex-row items-start mb-2 last:mb-0">
+                <View className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3" />
+                <Text className="flex-1 text-sm text-gray-700 leading-5">{note}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Create Goals Button */}
+        <View className="mx-4 mt-6 mb-8">
+          <Button 
+            className="bg-orange-500 py-4 rounded-xl"
+          >
+            <Text className="text-white font-semibold text-center text-lg">Create Goals</Text>
           </Button>
         </View>
       </ScrollView>
-
-      {/* Backdrop for action menu */}
-      {showActions && (
-        <TouchableOpacity 
-          className="absolute inset-0 bg-black bg-opacity-20"
-          onPress={() => setShowActions(false)}
-          activeOpacity={1}
-        />
-      )}
     </SafeAreaView>
   );
 }
