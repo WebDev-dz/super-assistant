@@ -82,7 +82,8 @@ export default function HomeScreen() {
       role: currentUserRole,
       onPress: async (optionKey) => {
         // @ts-ignore
-        openGoalDetails({goal: defaultGoal, mode: 'create'});
+        // openGoalDetails({goal: defaultGoal, mode: 'create'});
+        router.push('/goals/new' as RelativePathString);
       }
     },
     {

@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
-import { Pressable } from 'react-native';
+import type { ComponentType, ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
 import { cn } from '~/lib/utils';
 import { TextClassContext } from '~/components/ui/text';
 
@@ -57,9 +58,30 @@ const buttonTextVariants = cva(
   }
 );
 
-type ButtonProps = React.ComponentProps<typeof Pressable> & VariantProps<typeof buttonVariants>;
+type IconType = ComponentType<{ size?: number; color?: string }>;
 
-function Button({ ref, className, variant, size, ...props }: ButtonProps) {
+type ButtonPropsBase = Omit<React.ComponentProps<typeof Pressable>, 'children'> &
+  VariantProps<typeof buttonVariants> & {
+    leftIcon?: IconType;
+    rightIcon?: IconType;
+    iconSize?: number;
+    iconColor?: string;
+    children?: ReactNode;
+  };
+
+function Button({
+  ref,
+  className,
+  variant,
+  size,
+  leftIcon: LeftIcon,
+  rightIcon: RightIcon,
+  iconSize = 18,
+  iconColor,
+  children,
+  ...props
+}: ButtonPropsBase) {
+  const computedIconColor = iconColor ?? (variant === 'default' ? '#FFFFFF' : '#374151');
   return (
     <TextClassContext.Provider
       value={buttonTextVariants({ variant, size, className: 'web:pointer-events-none' })}
@@ -72,10 +94,16 @@ function Button({ ref, className, variant, size, ...props }: ButtonProps) {
         ref={ref}
         role='button'
         {...props}
-      />
+      >
+        <View className="flex-row items-center justify-center gap-2">
+          {LeftIcon ? <LeftIcon size={iconSize} color={computedIconColor} /> : null}
+          {children}
+          {RightIcon ? <RightIcon size={iconSize} color={computedIconColor} /> : null}
+        </View>
+      </Pressable>
     </TextClassContext.Provider>
   );
 }
 
 export { Button, buttonTextVariants, buttonVariants };
-export type { ButtonProps };
+export type { ButtonPropsBase as ButtonProps };
