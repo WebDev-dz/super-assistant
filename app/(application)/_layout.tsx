@@ -77,6 +77,19 @@ export default function TabsLayout() {
           }}
         />
 
+        {/* On Boarding */}
+
+        <Tabs.Screen
+          name="onboarding"
+          options={{
+            headerStyle: { display: "none" },
+            headerShown: false,
+            tabBarStyle:{
+              display: "none"
+            }
+          }}
+        />
+
         {/* Todos Tab */}
         <Tabs.Screen
           name="(app)/todos/index"
