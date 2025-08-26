@@ -1,6 +1,7 @@
 import db from "@/db";
 import { useAuth as useClerkAuth, useSignIn, useSignUp, useSSO } from "@clerk/clerk-expo";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Alert } from "react-native";
 
 
@@ -13,6 +14,7 @@ const useCustomAuth = () => {
     const { signIn, setActive, isLoaded: isSignInLoaded } = useSignIn()
     const { signUp, isLoaded: isSignUpLoaded } = useSignUp()
     const { startSSOFlow } = useSSO();
+    const [loading, setLoading] = useState(false);
 
     const onSignOut = async () => {
         await clerkAuth.signOut();
@@ -45,6 +47,27 @@ const useCustomAuth = () => {
         } catch (err: any) {
             Alert.alert("Sign In Error", err?.errors?.[0]?.message || "An error occurred during sign in.");
         }
+    }
+
+    const onForgotPassword = async (email: string) => {
+        
+            if (!isSignInLoaded || !email) return;
+            try {
+              setLoading(true);
+              // Bind identifier to signIn resource
+              await signIn
+              ?.create({
+                strategy: 'reset_password_email_code',
+                identifier: email,
+              })
+        
+              router.push({ pathname: '/(auth)/enter-otp', params: { email } });
+            } catch (err: any) {
+              alert(err?.errors?.[0]?.message || 'Failed to send reset code');
+            } finally {
+              setLoading(false);
+            }
+          
     }
 
     const onSignUp = async (email: string, password: string) => {
@@ -121,6 +144,10 @@ const useCustomAuth = () => {
         onSignUp,
         onAuthFlow,
         onVerify,
+        onForgotPassword,
+        isLoading: loading,
+        isSignInLoaded,
+        isSignUpLoaded
     }
 }
 
