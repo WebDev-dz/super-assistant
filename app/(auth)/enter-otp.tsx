@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useSignIn } from '@clerk/clerk-expo';
+import { useSignIn, SignedIn } from '@clerk/clerk-expo';
 
 export default function TaskifyEnterOTP() {
   const params = useLocalSearchParams<{ email?: string }>();
