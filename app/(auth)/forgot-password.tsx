@@ -24,10 +24,11 @@ export default function TaskifyForgotPassword() {
       await signIn.create({ identifier: email });
 
       // Extract the emailAddressId for the reset code factor
-      const firstFactor: any = signIn.supportedFirstFactors?.find(
-        (f: any) => f.strategy === 'reset_password_email_code'
-      );
-      const emailAddressId: string | undefined = firstFactor?.emailAddressId;
+      const firstFactor = await signIn.create({
+        "strategy": "reset_password_email_code",
+        "identifier": email
+      })
+      
 
       await signIn.prepareFirstFactor({
         strategy: 'reset_password_email_code',
