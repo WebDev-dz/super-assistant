@@ -21,20 +21,11 @@ export default function TaskifyForgotPassword() {
     try {
       setLoading(true);
       // Bind identifier to signIn resource
-      await signIn.create({ identifier: email });
-
-      // Extract the emailAddressId for the reset code factor
-      const firstFactor = await signIn.create({
-        "strategy": "reset_password_email_code",
-        "identifier": email
-      })
-      
-
-      await signIn.prepareFirstFactor({
+      await signIn
+      ?.create({
         strategy: 'reset_password_email_code',
-        // @ts-expect-error: Clerk types require emailAddressId; we obtain it from supportedFirstFactors
-        emailAddressId,
-      });
+        identifier: email,
+      })
 
       router.push({ pathname: '/(auth)/enter-otp', params: { email } });
     } catch (err: any) {
