@@ -17,7 +17,7 @@ export default function TaskifySecureAccount() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { onVerifyOTP } = useCustomAuth();
+  const { onResetPassword  } = useCustomAuth();
   const params = useLocalSearchParams<{ code?: string }>();
 
   const handleSavePassword = async () => {
@@ -28,7 +28,7 @@ export default function TaskifySecureAccount() {
 
     try {
       setSubmitting(true);
-      await onVerifyOTP(String(params.code || ''), newPassword);
+      await onResetPassword(String(params.code || ''), newPassword);
       router.replace('/');
     } catch (err: any) {
       alert(err?.errors?.[0]?.message || 'Failed to reset password');

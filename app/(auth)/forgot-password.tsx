@@ -9,30 +9,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useSignIn } from '@clerk/clerk-expo';
+import { Button, buttonTextVariants } from '@/components/ui/button';
 import useCustomAuth from '@/hooks/auth-provider';
 
 export default function TaskifyForgotPassword() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { onForgotPassword } = useCustomAuth();
+  const { isLoading, onForgotPassword } = useCustomAuth()
 
-  const handleSendOTP = async () => {
-    if (!email) {
-      alert('Please enter your email address');
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      await onForgotPassword(email);
-      // Navigation is handled inside onForgotPassword
-    } catch (err: any) {
-      console.log({err})
-      alert(err?.errors?.[0]?.message || 'Failed to send reset code');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
@@ -84,15 +69,15 @@ export default function TaskifyForgotPassword() {
         <View className="flex-1" />
 
         {/* Send OTP Button */}
-        <TouchableOpacity 
+        <Button 
           className={`rounded-xl py-4 items-center justify-center mb-8 ${email ? 'bg-orange-500' : 'bg-gray-300'}`}
-          onPress={handleSendOTP}
-          disabled={!email || loading}
+          onPress={() => onForgotPassword(email)}
+          disabled={!email || isLoading}
         >
-          <Text className="text-white text-base font-semibold">
-            {loading ? 'Sending...' : 'Send OTP Code'}
+          <Text className={buttonTextVariants({variant: "default"})}>
+            {isLoading ? 'Sending...' : 'Send OTP Code'}
           </Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     </SafeAreaView>
   );

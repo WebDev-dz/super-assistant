@@ -141,7 +141,7 @@ export default function TaskifyEnterOTP() {
         <View className="items-center pb-8">
           <View className="space-y-4">
             {/* Row 1 */}
-            <View className="flex-row space-x-8">
+            <View className="flex-row gap-1 space-x-8">
               <NumberButton number="1" onPress={handleNumberPress} />
               <NumberButton number="2" onPress={handleNumberPress} />
               <NumberButton number="3" onPress={handleNumberPress} />
