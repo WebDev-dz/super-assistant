@@ -10,30 +10,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSignIn } from '@clerk/clerk-expo';
+import useCustomAuth from '@/hooks/auth-provider';
+import { Button, buttonTextVariants } from '@/components/ui/button';
 
 export default function TaskifyForgotPassword() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { isLoaded, signIn } = useSignIn();
+  const { isSignInLoaded, isLoading, onForgotPassword } = useCustomAuth()
 
-  const handleSendOTP = async () => {
-    if (!isLoaded || !email) return;
-    try {
-      setLoading(true);
-      // Bind identifier to signIn resource
-      await signIn
-      ?.create({
-        strategy: 'reset_password_email_code',
-        identifier: email,
-      })
-
-      router.push({ pathname: '/(auth)/enter-otp', params: { email } });
-    } catch (err: any) {
-      alert(err?.errors?.[0]?.message || 'Failed to send reset code');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -85,15 +69,15 @@ export default function TaskifyForgotPassword() {
         <View className="flex-1" />
 
         {/* Send OTP Button */}
-        <TouchableOpacity 
+        <Button 
           className={`rounded-xl py-4 items-center justify-center mb-8 ${email ? 'bg-orange-500' : 'bg-gray-300'}`}
-          onPress={handleSendOTP}
-          disabled={!email || loading}
+          onPress={() => onForgotPassword(email)}
+          disabled={!email || isLoading}
         >
-          <Text className="text-white text-base font-semibold">
-            {loading ? 'Sending...' : 'Send OTP Code'}
+          <Text className={buttonTextVariants({variant: "default"})}>
+            {isLoading ? 'Sending...' : 'Send OTP Code'}
           </Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     </SafeAreaView>
   );
