@@ -72,7 +72,7 @@ export default function RootLayout() {
   useEffect(() => {
     const checkFirstLaunch = async () => {
       try {
-         await AsyncStorage.removeItem("hasLaunched")
+        //  await AsyncStorage.removeItem("hasLaunched")
         const hasLaunched = await AsyncStorage.getItem("hasLaunched");
         if (hasLaunched === null) {
           await AsyncStorage.setItem("hasLaunched", "true");
