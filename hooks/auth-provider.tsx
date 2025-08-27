@@ -73,21 +73,28 @@ const useCustomAuth = () => {
         }
     }
 
-    const onVerify = async (codeString: string) => {
+    const onVerifyOTP = async (codeString: string, newPassword?: string) => {
         if (!isSignInLoaded || codeString.length < 6) return;
         try {
           const attempt = await signIn.attemptFirstFactor({
             strategy: 'reset_password_email_code',
             code: codeString,
+            ...(newPassword && { password: newPassword }),
           });
     
-          if (attempt?.status === 'needs_new_password') {
+          if (attempt?.status === 'needs_new_password' && !newPassword) {
             router.push({ pathname: '/(auth)/new-password', params: { code: codeString } });
             return;
           }
     
-          // If Clerk returns complete (rare in this flow), route to root
           if (attempt?.status === 'complete') {
+            if (attempt.createdSessionId) {
+              await setActive?.({ session: attempt.createdSessionId });
+              const idToken = await clerkAuth.getToken?.();
+              if (idToken) {
+                await db.auth.signInWithIdToken({ idToken, clientName: "clerk" });
+              }
+            }
             router.replace('/');
           }
         } catch (err: any) {
@@ -115,12 +122,39 @@ const useCustomAuth = () => {
         }
     };
 
+    const onForgotPassword = async (email: string) => {
+        if (!isSignInLoaded) {
+            Alert.alert("Error", "Auth not ready. Please try again.");
+            return;
+        }
+        try {
+            const result = await signIn?.create({
+                identifier: email,
+                strategy: "reset_password_email_code",
+            });
+
+            console.log({result})
+
+            if (result?.status === "needs_new_password") {
+                router.push("/(auth)/enter-otp");
+                return result;
+            }
+            
+        } catch (err: any) {
+            Alert.alert(
+                "Password Reset Error", 
+                err?.errors?.[0]?.message || "An error occurred while trying to reset password."
+            );
+        }
+    };
+
     return {
         onSignOut,
         onSignIn,
         onSignUp,
         onAuthFlow,
-        onVerify,
+        onVerifyOTP,
+        onForgotPassword,
     }
 }
 

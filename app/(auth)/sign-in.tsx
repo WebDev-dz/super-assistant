@@ -10,7 +10,6 @@ import {
   StatusBar,
   TextInput,
 } from "react-native";
-import { useSignIn, useOAuth, useAuth, useSSO } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useForm } from "react-hook-form";
@@ -21,7 +20,7 @@ import { Button } from "~/components/ui/button";
 import { Form, FormField, FormInput, FormItem } from "~/components/ui/form";
 import { Text } from "~/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
-import db from "@/db";
+import useCustomAuth from "@/hooks/auth-provider";
 
 // Form validation schema
 const signInFormSchema = z.object({
@@ -35,10 +34,7 @@ const signInFormSchema = z.object({
 });
 
 const SignInScreen = () => {
-  const { signIn, setActive, isLoaded } = useSignIn();
-  const { getToken, signOut } = useAuth();
-  const { startSSOFlow: googleAuth } = useSSO();
-  //   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: 'oauth_apple' });
+  const { onSignIn, onAuthFlow } = useCustomAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
@@ -60,27 +56,9 @@ const SignInScreen = () => {
   };
 
   async function onSubmit(values: z.infer<typeof signInFormSchema>) {
-    if (!isLoaded) return;
-
     try {
-      console.log("signed in with clerk")
-      const completeSignIn = await signIn.create({
-        identifier: values.emailAddress,
-        password: values.password,
-      });
-
-      const idToken = await getToken();
-      if (completeSignIn.status === "complete" && idToken) {
-        await setActive({ session: completeSignIn.createdSessionId });
-        db.auth.signInWithIdToken({
-          idToken,
-          clientName: "clerk",
-        });
-        router.replace("/");
-        form.reset();
-      } else {
-        console.log(JSON.stringify(completeSignIn, null, 2));
-      }
+      await onSignIn(values.emailAddress, values.password);
+      form.reset();
     } catch (err: any) {
       Alert.alert(
         "Sign In Error",
@@ -90,19 +68,8 @@ const SignInScreen = () => {
   }
 
   const onGoogleSignIn = async () => {
-    try {
-      const { createdSessionId, setActive } = await googleAuth({
-        strategy: "oauth_google",
-        // redirectUrl: "/",
-      });
+      await onAuthFlow("oauth_google");
 
-      if (createdSessionId) {
-        setActive?.({ session: createdSessionId });
-        router.replace("/");
-      }
-    } catch (err) {
-      Alert.alert("Error", JSON.stringify({err}));
-    }
   };
 
   const [showPassword, setShowPassword] = React.useState(false);

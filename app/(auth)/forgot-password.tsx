@@ -9,35 +9,25 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSignIn } from '@clerk/clerk-expo';
+import useCustomAuth from '@/hooks/auth-provider';
 
 export default function TaskifyForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const { isLoaded, signIn } = useSignIn();
+  const { onForgotPassword } = useCustomAuth();
 
   const handleSendOTP = async () => {
-    if (!isLoaded || !email) return;
+    if (!email) {
+      alert('Please enter your email address');
+      return;
+    }
+    
     try {
       setLoading(true);
-      // Bind identifier to signIn resource
-      await signIn.create({ identifier: email });
-
-      // Extract the emailAddressId for the reset code factor
-      const firstFactor = await signIn.create({
-        "strategy": "reset_password_email_code",
-        "identifier": email
-      })
-      
-
-      await signIn.prepareFirstFactor({
-        strategy: 'reset_password_email_code',
-        // @ts-expect-error: Clerk types require emailAddressId; we obtain it from supportedFirstFactors
-        emailAddressId,
-      });
-
-      router.push({ pathname: '/(auth)/enter-otp', params: { email } });
+      await onForgotPassword(email);
+      // Navigation is handled inside onForgotPassword
     } catch (err: any) {
+      console.log({err})
       alert(err?.errors?.[0]?.message || 'Failed to send reset code');
     } finally {
       setLoading(false);
@@ -45,7 +35,7 @@ export default function TaskifyForgotPassword() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}

@@ -8,13 +8,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useSignIn, SignedIn } from '@clerk/clerk-expo';
+import useCustomAuth from '@/hooks/auth-provider';
 
 export default function TaskifyEnterOTP() {
   const params = useLocalSearchParams<{ email?: string }>();
   const [otpCode, setOtpCode] = useState<string[]>(['', '', '', '', '', '']);
   const [resendTimer, setResendTimer] = useState(60);
-  const { isLoaded, signIn } = useSignIn();
+  const { onForgotPassword, onVerifyOTP } = useCustomAuth();
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -49,43 +49,28 @@ export default function TaskifyEnterOTP() {
   const codeString = otpCode.join('');
 
   const onVerify = async () => {
-    if (!isLoaded || codeString.length < 6) return;
+    if (codeString.length < 6) {
+      alert('Please enter a complete 6-digit code');
+      return;
+    }
     try {
-      const attempt = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
-        code: codeString,
-      });
-
-      if (attempt?.status === 'needs_new_password') {
-        router.push({ pathname: '/(auth)/new-password', params: { code: codeString } });
-        return;
-      }
-
-      // If Clerk returns complete (rare in this flow), route to root
-      if (attempt?.status === 'complete') {
-        router.replace('/');
-      }
-    } catch (err: any) {
-      alert(err?.errors?.[0]?.message || 'Invalid verification code');
+      await onVerifyOTP(codeString);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   const onResend = async () => {
-    if (!isLoaded || resendTimer > 0) return;
+    if (resendTimer > 0) return;
     try {
-      const factor: any = signIn.supportedFirstFactors?.find(
-        (f: any) => f.strategy === 'reset_password_email_code'
-      );
-      const emailAddressId: string | undefined = factor?.emailAddressId;
-
-      await signIn.prepareFirstFactor({
-        strategy: 'reset_password_email_code',
-        // @ts-expect-error: Clerk types require emailAddressId
-        emailAddressId,
-      });
+      if (!params.email) {
+        alert('Email address is missing');
+        return;
+      }
+      await onForgotPassword(params.email);
       setResendTimer(60);
-    } catch (err: any) {
-      alert(err?.errors?.[0]?.message || 'Failed to resend code');
+    } catch (err) {
+      console.error(err);
     }
   };
 

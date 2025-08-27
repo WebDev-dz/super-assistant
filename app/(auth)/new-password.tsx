@@ -8,8 +8,8 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSignIn } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
+import useCustomAuth from '@/hooks/auth-provider';
 
 export default function TaskifySecureAccount() {
   const [newPassword, setNewPassword] = useState('');
@@ -17,11 +17,10 @@ export default function TaskifySecureAccount() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { onVerifyOTP } = useCustomAuth();
   const params = useLocalSearchParams<{ code?: string }>();
 
   const handleSavePassword = async () => {
-    if (!isLoaded) return;
     if (!newPassword || newPassword !== confirmPassword) {
       alert('Passwords must match.');
       return;
@@ -29,27 +28,8 @@ export default function TaskifySecureAccount() {
 
     try {
       setSubmitting(true);
-      // Complete the reset with the new password
-      // Prefer the attemptFirstFactor path (works across Clerk versions)
-      const attempt = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
-        code: String(params.code || ''),
-        password: newPassword,
-      });
-
-      if (attempt?.status === 'complete') {
-        if (attempt.createdSessionId) {
-          await setActive({ session: attempt.createdSessionId });
-        }
-        router.replace('/');
-        return;
-      }
-
-      // Some Clerk backends require code+password in one step.
-      // Fallback: some setups may require signIn.resetPassword after code accepted
-      // await signIn.resetPassword({ password: newPassword });
-
-      alert('Unable to reset password. Please try again.');
+      await onVerifyOTP(String(params.code || ''), newPassword);
+      router.replace('/');
     } catch (err: any) {
       alert(err?.errors?.[0]?.message || 'Failed to reset password');
     } finally {
