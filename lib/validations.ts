@@ -9,19 +9,19 @@ export const StatusSchema = z.enum([
   "on_hold",
   "completed",
   "cancelled",
-]).describe("Current status of a goal, milestone, or task");
+]).describe("Current status of a goal, habit, or task");
 
 export const PrioritySchema = z.enum(["low", "medium", "high", "urgent"])
   .describe("Priority level indicating importance and urgency");
 
 const NotificationTypeSchema = z.enum([
-  "milestone_due",
+  "habit_due",
   "goal_overdue",
   "task_assigned",
   "progress_update",
 ]).describe("Type of notification to be sent to users");
 
-const EventTypeSchema = z.enum(["goal", "milestone", "task", "reminder"])
+const EventTypeSchema = z.enum(["goal", "habit", "task", "reminder"])
   .describe("Type of calendar event being created");
 
 // User entity schema
@@ -56,7 +56,7 @@ export const GoalSchema = z.object({
 
   // Progress tracking
   overallProgress: z.number().min(0).max(100)
-    .describe("Overall completion percentage calculated from milestone progress"),
+    .describe("Overall completion percentage calculated from habit progress"),
 
   owner: z.string().describe("User ID of the person responsible for this goal"),
 
@@ -73,49 +73,25 @@ export const GoalSchema = z.object({
     .describe("ID of the calendar where goal events are stored"),
 }).strict();
 
-// Milestones entity schema
-export const MilestoneSchema = z.object({
-  id: z.string().describe("Unique identifier for the milestone"),
-  goalId: z.string().describe("ID of the parent goal this milestone belongs to"),
-  title: z.string().describe("Clear, specific title describing what this milestone achieves"),
-  description: z.string().optional().nullable()
-    .describe("Detailed description of milestone deliverables and acceptance criteria"),
-  percentage: z.coerce.number().min(0).max(100)
-    .describe("How much of the overall goal this milestone represents"),
-  completed: z.boolean().describe("Whether this milestone has been completed"),
-  status: StatusSchema.describe("Current progress status of the milestone"),
-  priority: PrioritySchema.describe("Priority level relative to other milestones"),
+// Habits entity schema
+export const HabitSchema = z.object({
+  id: z.string().describe("Unique identifier for the habit"),
+  goalId: z.string().describe("ID of the parent goal this habit belongs to"),
+  title: z.string().describe("Clear, specific title describing what this habit achieves"),
+  note: z.string().optional().nullable()
+    .describe("Detailed description of habit deliverables and acceptance criteria"),
+  
+  completedDays: z.date().array().describe("Whether this habit has been completed"),
+  status: StatusSchema.describe("Current progress status of the habit"),
 
   // Dates
-  deadline: z.coerce.string().describe("Target completion date for this milestone (ISO date string)"),
-  createdAt: z.coerce.string().describe("Timestamp when the milestone was created (ISO date string)"),
+  createdAt: z.coerce.string().describe("Timestamp when the habit was created (ISO date string)"),
   updatedAt: z.coerce.string().optional().nullable()
-    .describe("Timestamp when the milestone was last modified (ISO date string)"),
+    .describe("Timestamp when the habit was last modified (ISO date string)"),
 
-  // Dependencies
-  dependsOn: z.array(z.string()).optional().nullable()
-    .describe("Array of milestone IDs that must be completed before this one can start"),
 
-  // Time tracking
-  estimatedHours: z.coerce.number().min(0).optional().nullable()
-    .describe("Estimated time required to complete this milestone"),
-  actualHours: z.coerce.number().min(0).optional().nullable()
-    .describe("Actual time spent on this milestone (sum of related task hours)"),
-
-  // Calendar integration
-  calendarEventId: z.string().optional().nullable()
-    .describe("ID of the associated calendar event for deadline tracking"),
-  reminders: z
-    .array(
-      z.object({
-        type: z.string().describe("Type of reminder (e.g., 'email', 'push', 'calendar')"),
-        time: z.coerce.number().describe("Minutes before deadline to send reminder"),
-        message: z.string().optional().nullable()
-          .describe("Custom message for the reminder notification"),
-      })
-    )
-    .optional().nullable()
-    .describe("Array of reminder configurations for this milestone"),
+  reminder: z.date().transform((val) => val.toTimeString()).optional().nullable()
+    .describe("time of the reminder for this habit"),
 });
 
 export const AlarmSchema = z.object({
@@ -144,29 +120,22 @@ export const AlarmSchema = z.object({
 // Tasks entity schema
 export const TaskSchema = z.object({
   id: z.string().describe("Unique identifier for the task"),
-  milestoneId: z.string().describe("ID of the parent milestone this task belongs to"),
+  goalId: z.string().describe("ID of the parent goal this task belongs to"),
   title: z.string().describe("Clear, actionable title describing what needs to be done"),
-  description: z.string().optional().nullable().refine((val) => val !== null)
-    .describe("Detailed description of the task including specific steps or requirements"),
+  note: z.string().optional().nullable().refine((val) => val !== null)
+    .describe("Detailed notes of the task including specific steps or requirements"),
   completed: z.boolean().describe("Whether this task has been completed"),
-  priority: PrioritySchema.describe("Priority level for task scheduling and focus"),
 
   // Dates
   dueDate: z.coerce.string().optional().nullable()
     .describe("When this task should be completed"),
+  reminder: z.date().transform((val) => val.toTimeString()).optional().nullable()
+    .describe("time of the reminder for this task"),
   createdAt: z.coerce.string().describe("Timestamp when the task was created"),
   updatedAt: z.coerce.string().optional().nullable()
     .describe("Timestamp when the task was last modified"),
 
-  // Time tracking
-  estimatedHours: z.coerce.number().min(0).optional().nullable()
-    .describe("Estimated time required to complete this task"),
-  actualHours: z.coerce.number().min(0).optional().nullable()
-    .describe("Actual time spent working on this task"),
 
-  // Organization
-  tags: z.array(z.string()).optional().nullable()
-    .describe("Array of tags for organizing and filtering tasks"),
 });
 
 // Reminders entity schema
@@ -182,7 +151,7 @@ export const ReminderSchema = z.object({
 // Progress entity schema
 export const ProgressSchema = z.object({
   id: z.string().describe("Unique identifier for this progress record"),
-  milestoneId: z.string().describe("ID of the milestone this progress update relates to"),
+  habitId: z.string().describe("ID of the habit this progress update relates to"),
   goalId: z.string().describe("ID of the parent goal for quick reference"),
   previousPercentage: z.coerce.number().min(0).max(100)
     .describe("Completion percentage before this update"),
@@ -203,8 +172,8 @@ export const NotificationSchema = z.object({
   message: z.string().describe("Full notification message content"),
   goalId: z.string().optional().nullable()
     .describe("ID of related goal, if applicable"),
-  milestoneId: z.string().optional().nullable()
-    .describe("ID of related milestone, if applicable"),
+  habitId: z.string().optional().nullable()
+    .describe("ID of related habit, if applicable"),
   taskId: z.string().optional().nullable()
     .describe("ID of related task, if applicable"),
   read: z.boolean().describe("Whether the user has read this notification"),
@@ -213,26 +182,7 @@ export const NotificationSchema = z.object({
     .describe("Timestamp when the notification should be delivered (for scheduled notifications)"),
 });
 
-// Calendar Events entity schema
-export const CalendarEventSchema = z.object({
-  id: z.string().describe("Unique identifier for the calendar event record"),
-  goalId: z.string().optional().nullable()
-    .describe("ID of associated goal, if this event represents a goal"),
-  milestoneId: z.string().optional().nullable()
-    .describe("ID of associated milestone, if this event represents a milestone deadline"),
-  taskId: z.string().optional().nullable()
-    .describe("ID of associated task, if this event represents a task due date"),
-  eventType: EventTypeSchema.describe("Type of event for proper categorization and display"),
-  calendarId: z.string().describe("ID of the calendar where this event is stored"),
-  eventId: z.string().describe("External calendar system's event ID for synchronization"),
-  title: z.string().describe("Event title as it appears in the calendar"),
-  startDate: z.coerce.number().describe("Event start timestamp"),
-  endDate: z.coerce.number().describe("Event end timestamp"),
-  allDay: z.boolean().describe("Whether this is an all-day event"),
-  createdAt: z.coerce.number().describe("Timestamp when the calendar event was created"),
-  updatedAt: z.coerce.number().optional().nullable()
-    .describe("Timestamp when the calendar event was last modified"),
-});
+
 
 export const MessageSchema = z.object({
   id: z.string().describe("Unique identifier for the message"),
@@ -293,18 +243,23 @@ export const UpdateGoalSchema = CreateGoalSchema.partial().extend({
   updatedAt: z.string().describe("Timestamp when the goal was last updated"),
 }).strict();
 
-export const CreateMilestoneSchema = MilestoneSchema.omit({
+export const CreateHabitSchema = HabitSchema.omit({
   id: true,
+  goalId: true,
+  completedDays: true,
   createdAt: true,
   updatedAt: true,
 });
-export const UpdateMilestoneSchema = CreateMilestoneSchema.partial().extend({
-  updatedAt: z.coerce.number().describe("Timestamp when the milestone was last updated"),
+export const UpdateHabitSchema = CreateHabitSchema.partial().extend({
+  updatedAt: z.coerce.number().describe("Timestamp when the habit was last updated"),
 });
 
 export const CreateTaskSchema = TaskSchema.omit({
   id: true,
-  
+  completed: true,
+  goalId: true,
+  createdAt: true,
+  updatedAt: true,
 }).extend({
   // Alarm settings
   hasAlarm: z.boolean().default(false)
@@ -326,45 +281,31 @@ export const CreateNotificationSchema = NotificationSchema.omit({
   createdAt: true,
 });
 
-export const CreateCalendarEventSchema = CalendarEventSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export const UpdateCalendarEventSchema =
-  CreateCalendarEventSchema.partial().extend({
-    updatedAt: z.coerce.number().describe("Timestamp when the calendar event was last updated"),
-  });
 
 // Type exports for TypeScript usage
 export type User = z.infer<typeof UserSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
-export type Milestone = z.infer<typeof MilestoneSchema>;
+export type Habit = z.infer<typeof HabitSchema>;
 export type Task = z.infer<typeof TaskSchema>;
 export type Progress = z.infer<typeof ProgressSchema>;
 export type Notification = z.infer<typeof NotificationSchema>;
-export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
 
 export type CreateUser = z.infer<typeof CreateUserSchema>;
 export type UpdateUser = z.infer<typeof UpdateUserSchema>;
 export type CreateGoal = z.infer<typeof CreateGoalSchema>;
 export type UpdateGoal = z.infer<typeof UpdateGoalSchema>;
-export type CreateMilestone = z.infer<typeof CreateMilestoneSchema>;
-export type UpdateMilestone = z.infer<typeof UpdateMilestoneSchema>;
+export type CreateHabit = z.infer<typeof CreateHabitSchema>;
+export type UpdateHabit = z.infer<typeof UpdateHabitSchema>;
 export type CreateTask = z.infer<typeof CreateTaskSchema>;
 export type UpdateTask = z.infer<typeof UpdateTaskSchema>;
 export type CreateProgress = z.infer<typeof CreateProgressSchema>;
 export type CreateNotification = z.infer<typeof CreateNotificationSchema>;
-export type CreateCalendarEvent = z.infer<typeof CreateCalendarEventSchema>;
-export type UpdateCalendarEvent = z.infer<typeof UpdateCalendarEventSchema>;
 
 // Validation utility functions
 export const validateUser = (data: unknown) => UserSchema.parse(data);
 export const validateGoal = (data: unknown) => GoalSchema.parse(data);
-export const validateMilestone = (data: unknown) => MilestoneSchema.parse(data);
+export const validateHabit = (data: unknown) => HabitSchema.parse(data);
 export const validateTask = (data: unknown) => TaskSchema.parse(data);
 export const validateProgress = (data: unknown) => ProgressSchema.parse(data);
 export const validateNotification = (data: unknown) =>
   NotificationSchema.parse(data);
-export const validateCalendarEvent = (data: unknown) =>
-  CalendarEventSchema.parse(data);

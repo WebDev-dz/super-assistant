@@ -2,7 +2,7 @@ import "react-native-get-random-values";
 import "react-native-reanimated";
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-import '@/polyfills';
+import "@/polyfills";
 import { ClerkProvider, useAuth, useUser } from "@clerk/clerk-expo";
 
 import "../../global.css";
@@ -16,7 +16,14 @@ import { Tabs } from "expo-router";
 import Toaster from "react-native-toast-message";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Text, View, StyleSheet, Platform, TouchableOpacity, Pressable } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Platform,
+  TouchableOpacity,
+  Pressable,
+} from "react-native";
 import { NAV_THEME } from "@/lib/constants";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useRef, useState, useCallback } from "react";
@@ -33,14 +40,9 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-export {
-  ErrorBoundary,
-} from "expo-router";
-
-
+export { ErrorBoundary } from "expo-router";
 
 // Option Button Component
-
 
 export default function TabsLayout() {
   const { colorScheme, isDarkColorScheme } = useColorScheme();
@@ -84,9 +86,9 @@ export default function TabsLayout() {
           options={{
             headerStyle: { display: "none" },
             headerShown: false,
-            tabBarStyle:{
-              display: "none"
-            }
+            tabBarStyle: {
+              display: "none",
+            },
           }}
         />
 
@@ -124,6 +126,7 @@ export default function TabsLayout() {
           }}
         />
 
+       
 
         {/* Menu Stack Tab */}
         <Tabs.Screen
@@ -143,7 +146,7 @@ export default function TabsLayout() {
           options={{
             headerShown: false,
             // href: null,
-            tabBarButton: () => null
+            tabBarButton: () => null,
           }}
         />
       </Tabs>
@@ -153,4 +156,3 @@ export default function TabsLayout() {
     </>
   );
 }
-

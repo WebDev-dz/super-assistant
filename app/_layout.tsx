@@ -44,7 +44,14 @@ const AppLayout = () => {
           screenOptions={{
             headerShown: false,
           }}
-        />
+        >
+          <Stack.Screen
+          name="ai_goals"
+          options={{
+            presentation: "modal"
+          }} />
+        </Stack>
+
         <Toaster />
         <PortalHost />
       </BottomSheetModalProvider>

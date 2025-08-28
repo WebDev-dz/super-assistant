@@ -17,6 +17,7 @@ import { OptionButtonProps } from '@/components/ui/option-button';
 import TodoDetailsModal from '@/components/modals/TodoDetailsModal';
 import TodoCard from '@/components/cards/TodoCard';
 import { Progress } from '@/components/ui/progress';
+import EmptyState from '@/components/ui/empty-state';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -282,6 +283,56 @@ export default function HomeScreen() {
   );
 
 
+  const WeekStrip = () => {
+    const today = new Date();
+    const start = new Date(today);
+    // Move start to previous Monday
+    const day = start.getDay();
+    const diffToMon = (day + 6) % 7; // 0=>Mon
+    start.setDate(start.getDate() - diffToMon);
+
+    const days = Array.from({ length: 7 }, (_, idx) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + idx);
+      return d;
+    });
+
+    const isSameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+    const weekday = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short' });
+    const dayNum = (d: Date) => d.getDate();
+
+    return (
+      <View className="px-6 py-3 flex-row items-center justify-between">
+        {days.map((d, i) => {
+          const selected = isSameDay(d, today);
+          return (
+            <View
+              key={i}
+              className={`items-center justify-center px-2 ${selected ? '' : ''}`}
+            >
+              <Text className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{weekday(d)}</Text>
+              <View
+                className={`w-9 h-9 rounded-xl items-center justify-center ${
+                  selected
+                    ? isDark
+                      ? 'bg-orange-500/20 border border-orange-400/40'
+                      : 'bg-orange-100 border border-orange-300'
+                    : isDark
+                    ? 'bg-transparent border border-gray-700'
+                    : 'bg-transparent border border-gray-200'
+                }`}
+              >
+                <Text className={`${selected ? 'text-orange-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`}>{dayNum(d)}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderHeader = () => (
     <View>
       {/* Header Section */}
@@ -295,7 +346,8 @@ export default function HomeScreen() {
             : 'Here\'s your progress overview'}
         </Text>
       </View>
-
+      {/* Week Strip */}
+      <WeekStrip />
      
 
       {/* Statistics Overview */}
@@ -425,20 +477,16 @@ export default function HomeScreen() {
           />
         }
         ListEmptyComponent={() => (
-          <View className="items-center py-16 px-6">
-            <View className={`w-24 h-24 rounded-full items-center justify-center mb-4 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <Text className="text-4xl">🚀</Text>
-            </View>
-            <Text className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              Ready to get started?
-            </Text>
-            <Text className={`text-center px-8 mb-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              Create your first goal and start building productive habits
-            </Text>
-            <Text className={`text-center px-8 mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Tap the + button to create your first item
-            </Text>
-          </View>
+          <EmptyState
+            title="You have no goals"
+            description="Add a goal by clicking the (+) button below."
+            illustration={{
+              // Consumers can swap this with any component; keeping emoji as default
+              source: require('@/assets/images/icon.png'),
+              size: 96,
+            }}
+            className="py-16"
+          />
         )}
         renderItem={() => null}
       />

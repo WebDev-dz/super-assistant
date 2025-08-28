@@ -22,10 +22,11 @@ const useCustomAuth = () => {
   const [error, setError] = useState<Error | undefined>()
 
   const onSignOut = async () => {
-    await clerkAuth.signOut();
-    db.auth.signOut({
-      invalidateToken: true,
+    db.auth.signOut().then(async() => {
+      // Then sign out of Clerk to clear the Clerk session.
+      await clerkAuth.signOut();
     });
+  
   };
 
   const onSignIn = async (email: string, password: string) => {

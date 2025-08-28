@@ -1,6 +1,8 @@
 import { i, id } from "@instantdb/react-native";
 import db from "./db";
 
+type DayName = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+
 const _schema = i.schema({
   entities: { 
     $users: i.entity({
@@ -14,62 +16,39 @@ const _schema = i.schema({
       id: i.string().indexed(),
       title: i.string().indexed(),
       description: i.string().optional(),
+      image: i.string().optional(),
       status: i.string().indexed(), // 'not_started' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled'
-      priority: i.string().indexed(), // 'low' | 'medium' | 'high' | 'urgent'
+      // priority: i.string().indexed().optional(), // 'low' | 'medium' | 'high' | 'urgent'
       category: i.string().indexed().optional(),
-      tags: i.json().optional(), // Array of strings
       // Dates
       startDate: i.date(),
-      targetEndDate: i.date(),
-      actualEndDate: i.date().optional(),
+      // targetEndDate: i.date(),
+      // actualEndDate: i.date().optional(),
       createdAt: i.date(),
       updatedAt: i.date().optional(),
-      
       // Progress tracking
-      overallProgress: i.number(), // 0-100, calculated from milestones
-      
-      
+      overallProgress: i.number(), // 0-100, calculated from habits
       owner: i.string().indexed(), // User ID
-      
-      // Resources
-      budget: i.number().optional(),
-      estimatedTotalHours: i.number().optional(),
-      actualTotalHours: i.number().optional(),
-      
-      // Calendar integration
-      calendarId: i.string().optional(),
     }),
     
-    milestones: i.entity({
+    habits: i.entity({
       id: i.string().indexed(),
       goalId: i.string().indexed(),
       title: i.string().indexed(),
-      description: i.string().optional(),
-      percentage: i.number(), // 0-100, contribution to goal
-      completed: i.boolean(),
+      note: i.string().optional(),
+      completedDays: i.json<Date[]>(),
       status: i.string().indexed(), // 'not_started' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled'
       priority: i.string().indexed(), // 'low' | 'medium' | 'high' | 'urgent'
       
+      days: i.json<DayName[]>(), // Array of Alarm objects
       // Dates
-      deadline: i.string(),
       createdAt: i.date(),
       updatedAt: i.date().optional(),
-      
-      // Dependencies
-      dependsOn: i.json().optional(), // Array of milestone IDs
-      
-      // Time tracking
-      estimatedHours: i.number().optional(),
-      actualHours: i.number().optional(),
-      
-      // Calendar integration
-      calendarEventId: i.string().optional(),
-      reminders: i.json().optional(), // Array of Alarm objects
     }),
     
     tasks: i.entity({
       id: i.string().indexed(),
-      milestoneId: i.string().indexed(),
+      goalId: i.string().indexed(),
       title: i.string().indexed(),
       description: i.string().optional(),
       completed: i.boolean(),
@@ -80,22 +59,12 @@ const _schema = i.schema({
       createdAt: i.date(),
       updatedAt: i.date().optional(),
 
-      // Alarm
-      hasAlarm: i.boolean().optional(),
-      alarm: i.json().optional(),
-      
-      // Time tracking
-      estimatedHours: i.number().optional(),
-      actualHours: i.number().optional(),
-      
-      // Organization
-      tags: i.json().optional(), // Array of strings
     }),
     
     // For progress tracking and history
     progress: i.entity({
       id: i.string().indexed().unique(),
-      milestoneId: i.string().indexed(),
+      habitId: i.string().indexed(),
       goalId: i.string().indexed(), // For easier querying
       previousPercentage: i.number(),
       newPercentage: i.number(),
@@ -160,33 +129,18 @@ const _schema = i.schema({
     notifications: i.entity({
       id: i.string().indexed(),
       userId: i.string().indexed(),
-      type: i.string().indexed(), // 'milestone_due' | 'goal_overdue' | 'task_assigned' | 'progress_update'
+      type: i.string().indexed(), // 'habit_due' | 'goal_overdue' | 'task_assigned' | 'progress_update'
       title: i.string(),
       message: i.string(),
       goalId: i.string().optional(),
-      milestoneId: i.string().optional(),
+      habitId: i.string().optional(),
       taskId: i.string().optional(),
       read: i.boolean(),
       createdAt: i.date(),
       scheduledFor: i.date().optional(),
     }),
     
-    // For calendar events integration
-    calendarEvents: i.entity({
-      id: i.string().indexed(),
-      goalId: i.string().optional(),
-      milestoneId: i.string().optional(),
-      taskId: i.string().optional(),
-      eventType: i.string().indexed(), // 'goal' | 'milestone' | 'task' | 'reminder'
-      calendarId: i.string(),
-      eventId: i.string(), // External calendar event ID
-      title: i.string(),
-      startDate: i.date(),
-      endDate: i.date(),
-      allDay: i.boolean(),
-      createdAt: i.date(),
-      updatedAt: i.date().optional(),
-    }),
+   
   },
   
   links: {
@@ -204,63 +158,23 @@ const _schema = i.schema({
       }
     },
     
-    // Goal has multiple milestones
-    goalMilestones: {
+    // Goal has multiple habits
+    goalHabits: {
       forward: {
-        on: "milestones",
+        on: "habits",
         label: "goal",
         has: "one"
       },
       reverse: {
         on: "goals",
-        label: "milestones",
-        onDelete: "cascade", // Cascade delete milestones when goal is deleted
+        label: "habits",
+        onDelete: "cascade", // Cascade delete habits when goal is deleted
         has: "many"
       }
     },
     
-    // Milestone has multiple tasks
-    milestoneTasks: {
-      forward: {
-        on: "tasks",
-        label: "milestone",
-        has: "one"
-      },
-      reverse: {
-        on: "milestones",
-        label: "tasks",
-        has: "many"
-      }
-    },
-    
-    // Milestone has multiple progress entries
-    milestoneProgress: {
-      forward: {
-        on: "progress",
-        label: "milestone",
-        has: "one"
-      },
-      reverse: {
-        on: "milestones",
-        label: "progressEntries",
-        has: "many"
-      }
-    },
-    
-    // Goal has multiple progress entries (through milestones)
-    goalProgress: {
-      forward: {
-        on: "progress",
-        label: "goal",
-        has: "one",
-        onDelete: "cascade", // Cascade delete progress entries when goal is deleted
-      },
-      reverse: {
-        on: "goals",
-        label: "progressEntries",
-        has: "many"
-      }
-    },
+
+
     
     // User has multiple notifications
     userNotifications: {
@@ -276,46 +190,7 @@ const _schema = i.schema({
       }
     },
     
-    // Calendar events relationships
-    goalCalendarEvents: {
-      forward: {
-        on: "calendarEvents",
-        label: "goal",
-        has: "one",
-        onDelete: "cascade" // Cascade delete calendar events when goal is deleted
-      },
-      reverse: {
-        on: "goals",
-        label: "calendarEvents",
-        has: "many",
-      }
-    },
-    
-    milestoneCalendarEvents: {
-      forward: {
-        on: "calendarEvents",
-        label: "milestone",
-        has: "one"
-      },
-      reverse: {
-        on: "milestones",
-        label: "calendarEvents",
-        has: "many"
-      }
-    },
-    
-    taskCalendarEvents: {
-      forward: {
-        on: "calendarEvents",
-        label: "task",
-        has: "one"
-      },
-      reverse: {
-        on: "tasks",
-        label: "calendarEvents",
-        has: "many"
-      }
-    },
+   
     
     // Progress tracking user relation
     progressRecorder: {
@@ -437,7 +312,7 @@ const _schema = i.schema({
       }
     },
 
-    // Additional notification relationships for goals, milestones, and tasks
+    // Additional notification relationships for goals, habits, and tasks
     notificationGoal: {
       forward: {
         on: "notifications",
@@ -452,14 +327,14 @@ const _schema = i.schema({
       }
     },
 
-    notificationMilestone: {
+    notificationHabit: {
       forward: {
         on: "notifications",
-        label: "milestone",
+        label: "habit",
         has: "one"
       },
       reverse: {
-        on: "milestones",
+        on: "habits",
         label: "notifications",
         has: "many"
       }
@@ -490,7 +365,7 @@ const schema: AppSchema = _schema;
 
 export type { AppSchema };
 
-
+const wakaTime="waka_29579f2f-5e41-4fa8-8e7f-4114bb07da9a"
 
 export default schema;
 
