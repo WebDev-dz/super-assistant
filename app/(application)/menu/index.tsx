@@ -94,7 +94,7 @@ export default function MenuScreen() {
   const { user } = useUser();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme, toggleColorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const handleSignOut = async () => {

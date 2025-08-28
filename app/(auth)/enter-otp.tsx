@@ -1,20 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import useCustomAuth from '@/hooks/auth-provider';
+import OtpInput from '@/components/ui/otp-input';
+import OTPTextView from '@/components/ui/otp-input';
+import Clipboard from 'expo-clipboard';
 
 export default function TaskifyEnterOTP() {
   const params = useLocalSearchParams<{ email?: string }>();
-  const [otpCode, setOtpCode] = useState<string[]>(['', '', '', '', '', '']);
   const [resendTimer, setResendTimer] = useState(60);
   const { onForgotPassword, onVerifyOTP } = useCustomAuth();
+  const [otpInput, setOtpInput] = useState<string>('');
+
+  const input = useRef<OTPTextView>(null);
+
+  const clear = () => input.current?.clear();
+
+  const updateOtpText = () => input.current?.setValue(otpInput);
+
+  const showTextAlert = () => otpInput && Alert.alert(otpInput);
+
+  const handleCellTextChange = async (text: string, i: number) => {
+    if (i === 0) {
+      const clippedText = await Clipboard.getStringAsync();
+      if (clippedText.slice(0, 1) === text) {
+        input.current?.setValue(clippedText, true);
+      }
+    }
+  };
 
   useEffect(() => {
     if (resendTimer > 0) {
@@ -23,38 +44,18 @@ export default function TaskifyEnterOTP() {
     }
   }, [resendTimer]);
 
-  const handleNumberPress = (number: string) => {
-    const newOtp = [...otpCode];
-    const nextEmptyIndex = newOtp.findIndex((digit) => digit === '');
 
-    if (nextEmptyIndex !== -1) {
-      newOtp[nextEmptyIndex] = number;
-      setOtpCode(newOtp);
-    }
-  };
 
-  const handleBackspace = () => {
-    const newOtp = [...otpCode];
-    const lastFilledIndex = newOtp
-      .map((digit, index) => (digit !== '' ? index : -1))
-      .filter((index) => index !== -1)
-      .pop();
 
-    if (lastFilledIndex !== undefined) {
-      newOtp[lastFilledIndex] = '';
-      setOtpCode(newOtp);
-    }
-  };
 
-  const codeString = otpCode.join('');
 
   const onVerify = async () => {
-    if (codeString.length < 6) {
+    if (otpInput.length < 6) {
       alert('Please enter a complete 6-digit code');
       return;
     }
     try {
-      await onVerifyOTP(codeString);
+      await onVerifyOTP(otpInput);
     } catch (err) {
       console.error(err);
     }
@@ -74,16 +75,12 @@ export default function TaskifyEnterOTP() {
     }
   };
 
-  const NumberButton = ({ number, onPress }: { number: string; onPress: (n: string) => void }) => (
-    <TouchableOpacity className="w-20 h-20 items-center justify-center" onPress={() => onPress(number)}>
-      <Text className="text-black text-2xl font-medium">{number}</Text>
-    </TouchableOpacity>
-  );
+
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       {/* Header */}
       <View className="flex-row items-center px-6 py-4">
         <TouchableOpacity onPress={() => router.back()}>
@@ -107,16 +104,14 @@ export default function TaskifyEnterOTP() {
 
         {/* OTP Input Fields */}
         <View className="flex-row justify-center space-x-4 mb-8">
-          {otpCode.map((digit, index) => (
-            <View
-              key={index}
-              className={`w-16 h-16 rounded-xl border-2 items-center justify-center ${
-                digit !== '' ? 'border-gray-300 bg-gray-100' : 'border-gray-200 bg-white'
-              }`}
-            >
-              <Text className="text-black text-xl font-semibold">{digit}</Text>
-            </View>
-          ))}
+          <OtpInput
+            ref={input}
+            // containerStyle={styles.textInputContainer}
+            handleTextChange={setOtpInput}
+            handleCellTextChange={handleCellTextChange}
+            inputCount={6}
+            keyboardType="numeric"
+          />
         </View>
 
         {/* Resend Timer */}
@@ -137,46 +132,14 @@ export default function TaskifyEnterOTP() {
         {/* Spacer */}
         <View className="flex-1" />
 
-        {/* Number Pad */}
-        <View className="items-center pb-8">
-          <View className="space-y-4">
-            {/* Row 1 */}
-            <View className="flex-row gap-1 space-x-8">
-              <NumberButton number="1" onPress={handleNumberPress} />
-              <NumberButton number="2" onPress={handleNumberPress} />
-              <NumberButton number="3" onPress={handleNumberPress} />
-            </View>
-            {/* Row 2 */}
-            <View className="flex-row space-x-8">
-              <NumberButton number="4" onPress={handleNumberPress} />
-              <NumberButton number="5" onPress={handleNumberPress} />
-              <NumberButton number="6" onPress={handleNumberPress} />
-            </View>
-            {/* Row 3 */}
-            <View className="flex-row space-x-8">
-              <NumberButton number="7" onPress={handleNumberPress} />
-              <NumberButton number="8" onPress={handleNumberPress} />
-              <NumberButton number="9" onPress={handleNumberPress} />
-            </View>
-            {/* Row 4 */}
-            <View className="flex-row space-x-8">
-              <TouchableOpacity className="w-20 h-20 items-center justify-center">
-                <Text className="text-black text-2xl font-medium">*</Text>
-              </TouchableOpacity>
-              <NumberButton number="0" onPress={handleNumberPress} />
-              <TouchableOpacity className="w-20 h-20 items-center justify-center" onPress={handleBackspace}>
-                <Ionicons name="backspace-outline" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+
 
         {/* Verify Button */}
         <View className="px-6 mb-8">
           <TouchableOpacity
-            className={`rounded-xl py-4 items-center justify-center ${codeString.length < 6 ? 'bg-gray-300' : 'bg-orange-500'}`}
+            className={`rounded-xl py-4 items-center justify-center ${otpInput.length < 6 ? 'bg-gray-300' : 'bg-orange-500'}`}
             onPress={onVerify}
-            disabled={codeString.length < 6}
+            disabled={otpInput.length < 6}
           >
             <Text className="text-white text-base font-semibold">Verify</Text>
           </TouchableOpacity>

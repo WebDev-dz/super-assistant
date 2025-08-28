@@ -11,7 +11,7 @@ export default function AuthLayout() {
 
   useEffect(() => {
     if (isSignedIn){
-      // router.push("/")
+      router.push("/")
     }
   },[isSignedIn])
 

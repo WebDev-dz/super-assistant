@@ -87,10 +87,12 @@ const SignUpScreen = () => {
   };
 
   async function onSubmit(values: z.infer<typeof signUpFormSchema>) {
+    console.log({ values })
     if (!isLoaded) return;
 
     try {
-        // console.log({values})
+      // console.log({values})
+      console.log({ values })
       await signUp.create({
         // firstName: values.firstName,
         // lastName: values.lastName,
@@ -112,7 +114,7 @@ const SignUpScreen = () => {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       });
-      
+
       if (completeSignUp.status === 'complete') {
 
         await setActive({ session: completeSignUp.createdSessionId });
@@ -155,12 +157,12 @@ const SignUpScreen = () => {
   // Verification Form
   if (pendingVerification) {
     return (
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
       >
-        <ScrollView 
-          contentContainerStyle={{ 
+        <ScrollView
+          contentContainerStyle={{
             flexGrow: 1,
             paddingTop: contentInsets.top + 20,
             paddingBottom: contentInsets.bottom + 20,
@@ -218,9 +220,9 @@ const SignUpScreen = () => {
             {/* Resend Code */}
             <View className="flex-row justify-center items-center">
               <Text className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                Didn't receive the code? 
+                Didn't receive the code?
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   // Implement resend logic
                   Alert.alert('Resend', 'Verification code resent to your email.');
@@ -241,7 +243,7 @@ const SignUpScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-gray-900"
+      className={`flex-1 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
     >
       <ScrollView
         contentContainerStyle={{
@@ -284,19 +286,20 @@ const SignUpScreen = () => {
                 control={form.control}
                 name="emailAddress"
                 render={({ field }) => (
-                  <View className="bg-gray-800 rounded-lg px-4 py-4 flex-row items-center">
-                    <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
-                    <TextInput
-                      className="flex-1 text-white text-base ml-3"
-                      placeholder="Email"
-                      placeholderTextColor="#9CA3AF"
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                    />
-                  </View>
+
+
+                  <Input
+                    className="flex-1 text-base ml-3"
+                    placeholder="Email"
+                    placeholderTextColor="#9CA3AF"
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    leftIcon={() => (<Ionicons name="mail-outline" size={20} color="#9CA3AF" />)}
+                  />
+
                 )}
               />
             </View>
@@ -337,9 +340,8 @@ const SignUpScreen = () => {
               onPress={() => setAgreeToTerms(!agreeToTerms)}
             >
               <View
-                className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
-                  agreeToTerms ? 'bg-orange-500 border-orange-500' : 'border-gray-500'
-                }`}
+                className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${agreeToTerms ? 'bg-orange-500 border-orange-500' : 'border-gray-500'
+                  }`}
               >
                 {agreeToTerms && <Ionicons name="checkmark" size={12} color="white" />}
               </View>
@@ -388,7 +390,7 @@ const SignUpScreen = () => {
             <TouchableOpacity
               className={`rounded-xl py-4 items-center justify-center ${agreeToTerms ? 'bg-orange-500' : 'bg-gray-700'}`}
               disabled={!agreeToTerms || form.formState.isSubmitting}
-              onPress={form.handleSubmit(onSubmit)}
+              onPress={form.handleSubmit(onSubmit, console.error)}
             >
               <Text className="text-white text-base font-semibold">
                 {form.formState.isSubmitting ? 'Creating Account...' : 'Sign up'}
