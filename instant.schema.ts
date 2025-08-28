@@ -365,7 +365,6 @@ const schema: AppSchema = _schema;
 
 export type { AppSchema };
 
-const wakaTime="waka_29579f2f-5e41-4fa8-8e7f-4114bb07da9a"
 
 export default schema;
 
